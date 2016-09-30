@@ -77,7 +77,7 @@ func main(){
 
 ##X1 Sending Invoice from merchant to customer
 
-[Detail Desctiption Interface](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_1)
+[Detail Desctiption Interface](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X1)
 ```go
 invoice := webmoney.Invoice{
 		OrderId:      "10",
