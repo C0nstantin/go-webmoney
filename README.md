@@ -63,8 +63,8 @@ wmCl := webmoney.WmClient{
 ```go
 func main(){
 	str := "source string"
-	signer := wmsigner.newsigner("wmid","password","key_string")
-	sign_str,err  := signer.sign(str)
+	signer := wmsigner.NewSigner("wmid","password","key_string")
+	sign_str,err  := signer.Sign(str)
 	if(err != nil) {
 		// do something if error})
 	}
