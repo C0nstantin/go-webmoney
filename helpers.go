@@ -7,8 +7,9 @@ package webmoney
 
 import (
 	"log"
-	"strconv"
+	//"strconv"
 	"time"
+	"fmt"
 
 	"github.com/qiniu/iconv"
 )
@@ -16,7 +17,8 @@ import (
 // function return reqn params for webmoney request
 // each subsequent more then the previews
 func Reqn() string {
-	return time.Now().Local().Format("20060102150405") + strconv.Itoa(int(time.Now().Nanosecond()/10000000))
+	nanoseconds := fmt.Sprintf("%03.f",float32(time.Now().Nanosecond()/1000000))
+	return time.Now().Local().Format("20060102150405") + nanoseconds
 }
 
 // encode string from utf8 to cp1251
