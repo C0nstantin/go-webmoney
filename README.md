@@ -1,6 +1,7 @@
 go-webmoney 
 
-#Requirements
+# Requirements
+
 * Go1.7
 
 ABOUT
@@ -8,7 +9,7 @@ ABOUT
 XML interfaces are basically text message interfaces that send data via HTTPS protocol (http over 128-bit SSL) to special certification web servers of the system. Data is sent in the XML format with help of special module for authentication of WebMoney Keeper key files or standard certificates (WM Keeper WebPro certificates).
 [Detail](http://wiki.wmtransfer.com/projects/webmoney/wiki/XML-interfaces)
 
-#Install
+# Install
 ```go 
 package main
 
@@ -19,7 +20,7 @@ import "github.com/C0nstatin/go-webmoney"
 How Use
 -------
 
-#WinPro Client (Classic)
+# WinPro Client (Classic)
 ```go
 var CnfClassic = struct {
   Wmid string
@@ -38,7 +39,7 @@ wmCl := webmoney.WmClient{
 	}
 
 ```
-#WebPro Client (Light)
+# WebPro Client (Light)
 ```go
 var CnfLight = struct{
   Wmid string
@@ -73,7 +74,7 @@ func main(){
 ```
 
 
-#Webmoney XML Interfaces
+# Webmoney XML Interfaces
 
 ##X1 Sending Invoice from merchant to customer
 
@@ -113,12 +114,12 @@ result implements type:
 */
 
 ```
-##X2 Transferring funds from one purse to another.
+## X2 Transferring funds from one purse to another.
 This interface is available for registered members only and can be used for making 
 transfers from purses of any WM Keeper, including Budget Automates.
-**  The option can be enabled at the Web Merchant Interface service settings page in the "additional parameters" section. 
+**The option can be enabled at the Web Merchant Interface service settings page in the "additional parameters" section. 
 Enabling this option you undertake to use the "trans" nlyauth = 1" parameter.
-The Keeper that signs requests should have Personal passport. " **
+The Keeper that signs requests should have Personal passport. "**
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X2)
 ```go
 	transaction := webmoney.Transaction{
@@ -158,7 +159,7 @@ result implements:
   }
 */
 ```
-##x3 Receiving the History of Transactions; checking Transaction status
+## x3 Receiving the History of Transactions; checking Transaction status
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X3)
 ```go
 	opts := webmoney.GetOpers{
@@ -176,7 +177,7 @@ result implements:
 }
   */
 ```
-##x4 Receiving the history of issued invoices. Verifying whether invoices were paid
+## x4 Receiving the history of issued invoices. Verifying whether invoices were paid
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X4)
 
 ```go
@@ -195,7 +196,7 @@ type OutInvoicesResp struct {
 }
 */
 ```
-##x5 Completing a code-protected transaction. Entering a protection code
+## x5 Completing a code-protected transaction. Entering a protection code
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X5)
 ```go
 //create transactionf with pcode
@@ -238,7 +239,7 @@ type OutInvoicesResp struct {
 	resultFinish, err := wmClight.DoFinishProtect(fp)
   /* resultFinish implements type Operation */
 ```
-##x6 Sending message to random WM-identifier via internal mail
+## x6 Sending message to random WM-identifier via internal mail
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X6)
 ```go
 
@@ -263,7 +264,7 @@ type OutInvoicesResp struct {
 
 ```
 
-##x7 Verifying client’s handwritten signature – owner of WM Keeper WinPro
+## x7 Verifying client’s handwritten signature – owner of WM Keeper WinPro
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X7)
 ```go
 	signature := webmoney.TestSignRequest{
@@ -281,7 +282,7 @@ type OutInvoicesResp struct {
   */
 ```
 
-##x8 Retrieving information about purse ownership. Searching for system user by his/her identifier or purse
+## x8 Retrieving information about purse ownership. Searching for system user by his/her identifier or purse
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X8)
 ```go
 
@@ -327,7 +328,7 @@ type OutInvoicesResp struct {
   }
   */
 ```
-##x9 Retrieving information about purse balance
+## x9 Retrieving information about purse balance
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X9)
 ```go
   	p := webmoney.Purses{
@@ -353,7 +354,7 @@ type OutInvoicesResp struct {
   */
 ```
 
-##x10 Retrieving list of invoices for payment
+## x10 Retrieving list of invoices for payment
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X10)
 ```go
 	i := webmoney.InInvoices {
@@ -372,13 +373,13 @@ type OutInvoicesResp struct {
   */
 ```
 
-##x11 Retrieving information from client’s passport by WM-identifier
+## x11 Retrieving information from client’s passport by WM-identifier
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X11)
 ```go
 	result, err := webmoney.GetInfoWmid(`128756507061`)
  ```
 
-##x13 Recalling incomplete protected transaction
+## x13 Recalling incomplete protected transaction
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X13)
 ```go
   rp := RejectProtect {
@@ -388,7 +389,7 @@ type OutInvoicesResp struct {
   /*result implements type Operation*/
 ```
 
-##x14 Fee-free refund
+## x14 Fee-free refund
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X14)
 ```go
    tr := webmoney.Trans {
@@ -401,7 +402,7 @@ type OutInvoicesResp struct {
 
 ```
 
-##x15 Viewing and changing settings of “by trust” management
+## x15 Viewing and changing settings of “by trust” management
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X15)
 ```go
 
@@ -458,7 +459,7 @@ result,err := wmCl.SetTrast(st)
 
 ```
 
-##x16 Creating a purse
+## x16 Creating a purse
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X16)
 ```go
 p := webmoney.Purse{
