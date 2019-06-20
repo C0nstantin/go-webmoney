@@ -16,6 +16,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/C0nstantin/go-webmoney/wmsigner"
 	"github.com/paulrosania/go-charset/charset"
 	_ "github.com/paulrosania/go-charset/data"
 	"io/ioutil"
@@ -23,7 +24,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"github.com/C0nstantin/go-webmoney/wmsigner"
 )
 
 // cononical name for structs
@@ -45,6 +45,7 @@ const (
 	X152 string = `TrustList2`
 	X153 string = `TrustSave2`
 	X16  string = `CreatePurse`
+	X23  string = `InvoiceRefusal`
 )
 
 // base scruct for all request
@@ -150,6 +151,7 @@ func (w *WmClient) SendRequest() (string, error) {
 	result, err := w.sendRequest(url, body)
 	return result, err
 }
+
 // private
 // Functrion send requst to server and return response how string
 func (w *WmClient) sendRequest(url string, body string) (string, error) {
@@ -206,6 +208,7 @@ func (w *WmClient) sendRequest(url string, body string) (string, error) {
 		return string(result), nil
 	}
 }
+
 //Function prse response and return structure response
 func (w *WmClient) ParseResponse(resp interface{}) error {
 	v := responseBase{
@@ -238,6 +241,7 @@ func (w *WmClient) getResult(result interface{}) error {
 	return nil
 
 }
+
 // Root ca for webmoney requests
 const ROOT_CA = `
 -----BEGIN CERTIFICATE-----
