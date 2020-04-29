@@ -23,7 +23,7 @@ func Reqn() string {
 
 // encode string from utf8 to cp1251
 func Utf8ToWin(s string) (string, error) {
-	d, err := iconv.Open("cp1251", "utf8")
+	d, err := iconv.Open("cp1251//IGNORE", "utf8")
 	if err != nil {
 		return "", err
 	}
