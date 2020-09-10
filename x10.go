@@ -32,6 +32,7 @@ func (w *WmClient) GetInInvoices(i InInvoices) (InInvoicesResponse, error) {
 	if w.IsClassic() {
 		w.Sign = i.Wmid + i.WmInvid + i.DateStart + i.DateFinish + w.Reqn
 	}
+
 	w.Request = i
 	result := InInvoicesResponse{}
 	err := w.getResult(&result)
