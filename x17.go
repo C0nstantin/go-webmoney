@@ -14,55 +14,54 @@ import (
 )
 
 type ContractCreateRequest struct {
-	XMLName		 xml.Name  `xml:"contract.request"`
-	SignWmid	 string		 `xml:"sign_wmid"`
-	Contract   Contract
+	XMLName  xml.Name `xml:"contract.request"`
+	SignWmid string   `xml:"sign_wmid"`
+	Contract Contract
 }
 
 type Contract struct {
-	Name			 string    `xml:"name"`
-	Ctype      int8      `xml:"ctype"`
-	Text			 string    `xml:"text"`
-	Sign       string    `xml:"sign"`
-	AccessList string    `xml:"accesslist"`
-	Wmids      []string  `xml:"accesslist>wmid"`
-
+	Name       string   `xml:"name"`
+	Ctype      int8     `xml:"ctype"`
+	Text       string   `xml:"text"`
+	Sign       string   `xml:"sign"`
+	AccessList string   `xml:"accesslist"`
+	Wmids      []string `xml:"accesslist>wmid"`
 }
 
 type ContractCreateResponse struct {
-	XMLName   xml.Name  `xml:"contract.response"`
+	XMLName xml.Name `xml:"contract.response"`
 
-	Retval     int8     `xml:"retval"`
-	Retdesc    string   `xml:"retdesc"`
-	ContractId int64    `xml:"contractid"`
+	Retval     int8   `xml:"retval"`
+	Retdesc    string `xml:"retdesc"`
+	ContractId int64  `xml:"contractid"`
 }
 
-
 type ContractGetInfoReqeust struct {
-	XMLName		xml.Name		`xml:"contract.request"`
+	XMLName xml.Name `xml:"contract.request"`
 
-	Wmid				string		`xml:"wmid"`
-	ContractId	string		`xml:"contractid"`
-	Mode				string    `xml:"mode"`
-	Sign        string		`xml:"sign"`
+	Wmid       string `xml:"wmid"`
+	ContractId string `xml:"contractid"`
+	Mode       string `xml:"mode"`
+	Sign       string `xml:"sign"`
 }
 
 type ContractGetInfoResponse struct {
-	XMLName   xml.Name					`xml:"contract.response"`
+	XMLName xml.Name `xml:"contract.response"`
 
-	Retval       int8						`xml:"retval"`
-	Retdesc      string					`xml:"retdesc"`
+	Retval       int8           `xml:"retval"`
+	Retdesc      string         `xml:"retdesc"`
 	ContractInfo []ContractInfo `xml:"contractinfo>row"`
 }
 
 type ContractInfo struct {
-	XMLName			xml.Name	`xml:"row"`
+	XMLName xml.Name `xml:"row"`
 
-	ContractId	int64			`xml:"contractid,attr"`
-	Wmid				string		`xml:"wmid,attr"`
-	AcceptDate	string		`xml:"acceptdate,attr"`
+	ContractId int64  `xml:"contractid,attr"`
+	Wmid       string `xml:"wmid,attr"`
+	AcceptDate string `xml:"acceptdate,attr"`
 }
 
+/*
 func(w *WmClient) CreateContract(c ContractCreateRequest) (ContractCreateResponse) {
 
 }
@@ -71,5 +70,4 @@ func(w *WmClient) GetContractInfo(c ContractGetInfoReqeust) (ContractGetInfoResp
 
 }
 
-
-
+*/

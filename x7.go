@@ -24,18 +24,23 @@ type TestSignRequest struct {
 	Sign    string   `xml:"sign"`
 }
 
+func (t TestSignRequest) GetSignSource(reqn string) (string, error) {
+
+	return t.Wmid + t.Plan + t.Sign, nil
+}
+
 type TestSignResponse struct {
 	XMLName xml.Name `xml:"testsign"`
 	Res     string   `xml:"res"`
 }
 
 func (w *WmClient) TestSign(t TestSignRequest) (TestSignResponse, error) {
-	w.X = X7
-	if w.IsClassic() {
-		w.Sign = w.Wmid + t.Wmid + t.Plan + t.Sign
+	X := W3s{
+		Interface: XInterface{Name: "ClassicAuth", Type: "w3s"},
+		Request:   t,
+		Client:    w,
 	}
-	w.Request = t
 	result := TestSignResponse{}
-	err := w.getResult(&result)
+	err := X.getResult(&result)
 	return result, err
 }

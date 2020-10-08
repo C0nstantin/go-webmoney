@@ -21,20 +21,23 @@ type InInvoices struct {
 	DateFinish string   `xml:"datefinish"`
 }
 
+func (i InInvoices) GetSignSource(reqn string) (string, error) {
+	return i.Wmid + i.WmInvid + i.DateStart + i.DateFinish + reqn, nil
+}
+
 type InInvoicesResponse struct {
 	XMLName     xml.Name          `xml:"ininvoices"`
-	InvoiceList []InvoiceResponse `xml:ininvoices`
+	InvoiceList []InvoiceResponse `xml:"ininvoices"`
 }
 
 func (w *WmClient) GetInInvoices(i InInvoices) (InInvoicesResponse, error) {
-	w.Reqn = Reqn()
-	w.X = X10
-	if w.IsClassic() {
-		w.Sign = i.Wmid + i.WmInvid + i.DateStart + i.DateFinish + w.Reqn
+	X := W3s{
+		Interface: XInterface{Name: "InInvoices", Type: "w3s"},
+		Request:   i,
+		Client:    w,
 	}
 
-	w.Request = i
 	result := InInvoicesResponse{}
-	err := w.getResult(&result)
+	err := X.getResult(&result)
 	return result, err
 }

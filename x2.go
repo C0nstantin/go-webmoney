@@ -26,8 +26,29 @@ type Transaction struct {
 	OnlyAuth  string   `xml:"onlyauth"`
 }
 
+func (t Transaction) GetSignSource(reqn string) (string, error) {
+	var desc string
+	if t.Period == "" {
+		t.Period = "0"
+	}
+	desc, err := Utf8ToWin(t.Desc)
+	if desc != "" && err != nil {
+		return "", err
+	}
+
+	return reqn +
+		t.TranId +
+		t.PurseSrc +
+		t.PurseDest +
+		t.Amount +
+		string(t.Period) +
+		t.PCode +
+		desc +
+		t.WmInvid, nil
+}
+
 type Operation struct {
-	XMLName   xml.Name `xml:operation`
+	XMLName   xml.Name `xml:"operation"`
 	Id        string   `xml:"id,attr"`
 	Ts        string   `xml:"ts,attr"`
 	TranId    string   `xml:"tranid"`
@@ -43,32 +64,20 @@ type Operation struct {
 	DateUpd   string   `xml:"dateupd"`
 	CorrWm    string   `xml:"corrwm"`
 	Rest      string   `xml:"rest"`
-	TimeLock  bool     `xml:timelock`
+	TimeLock  bool     `xml:"timelock"`
 }
 
 func (w *WmClient) CreateTransaction(t Transaction) (Operation, error) {
-	w.Reqn = Reqn()
-	w.X = X2
 
-	if w.IsClassic() {
-		desc, err := Utf8ToWin(t.Desc)
-		if err != nil {
-			return Operation{}, err
-		}
-		w.Sign = w.Reqn +
-			t.TranId +
-			t.PurseSrc +
-			t.PurseDest +
-			t.Amount +
-			t.Period +
-			t.PCode +
-			desc +
-			t.WmInvid
+	X := W3s{
+		Request:   t,
+		Interface: XInterface{Name: "Trans", Type: "w3s"},
+		Client:    w,
 	}
 
-	w.Request = t
 	result := Operation{}
-	err := w.getResult(&result)
+	err := X.getResult(&result)
+
 	return result, err
 
 }

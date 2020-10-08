@@ -97,8 +97,8 @@ func (w *wmsigner) Sign(data string) (string, error) {
 	}
 
 	//checkpassword
-	if(len(w.pass)==0){
-   return "",errors.New("Password can not to be empty!")
+	if len(w.pass) == 0 {
+		return "", errors.New("Password can not to be empty!")
 	}
 	powers, modules := w.initkey()
 	hash := md4Hash([]byte(data))

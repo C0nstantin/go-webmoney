@@ -10,25 +10,19 @@ type FinishProtect struct {
 	PCode    string   `xml:"pcode"`
 }
 
-/*
-type Operation struct {
-	XMLName  xml.Name `xml:operation`
-	Id       string   `xml:"id,attr"`
-	Ts       string   `xml:"ts,attr"`
-	OperType string   `xml:"opertype"`
-	DateUpd  string   `xml:"dateupd"`
+func (f FinishProtect) GetSignSource(reqn string) (string, error) {
+	return f.WmTranId + f.PCode + reqn, nil
 }
-*/
-func (w *WmClient) DoFinishProtect(f FinishProtect) (Operation, error) {
-	w.Reqn = Reqn()
-	w.X = X5
 
-	if w.IsClassic() {
-		w.Sign = f.PCode + f.WmTranId + w.Reqn
+func (w *WmClient) DoFinishProtect(f FinishProtect) (Operation, error) {
+
+	X := W3s{
+		Request:   f,
+		Interface: XInterface{Name: "FinishProtect", Type: "w3s"},
+		Client:    w,
 	}
 
-	w.Request = f
 	result := Operation{}
-	err := w.getResult(&result)
+	err := X.getResult(&result)
 	return result, err
 }

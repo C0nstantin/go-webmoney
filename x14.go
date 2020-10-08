@@ -20,17 +20,18 @@ type Trans struct {
 	MoneyBackPhone string   `xml:"moneybackphone"`
 }
 
+func (t Trans) GetSignSource(reqn string) (string, error) {
+	return reqn + t.InWmTranId + t.Amount, nil
+}
+
 func (w *WmClient) MoneyBack(t Trans) (Operation, error) {
-	w.Reqn = Reqn()
-	w.X = X14
-
-	if w.IsClassic() {
-		w.Sign = w.Reqn + t.InWmTranId + t.Amount
+	X := W3s {
+		Interface: XInterface{Name: "TransMoneyback", Type: "w3s"},
+	  	Request: t,
+	  	Client: w,
 	}
-
-	w.Request = t
 	result := Operation{}
 
-	err := w.getResult(&result)
+	err := X.getResult(&result)
 	return result, err
 }

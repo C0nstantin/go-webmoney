@@ -40,6 +40,11 @@ type TestWmPurse struct {
 	Purse   string   `xml:"purse"`
 }
 
+func (t TestWmPurse) GetSignSource(reqn string) (string, error) {
+	return t.Wmid + t.Purse, nil
+
+}
+
 type TestWmPurseResponse struct {
 	XMLName xml.Name      `xml:"testwmpurse"`
 	Wmid    Wmid          `xml:"wmid"`
@@ -60,13 +65,12 @@ type Wmid struct {
 }
 
 func (w *WmClient) FindWmidPurse(t TestWmPurse) (TestWmPurseResponse, error) {
-	w.X = X8
-	w.Reqn = Reqn()
-	if w.IsClassic() {
-		w.Sign = t.Wmid + t.Purse
+	X := W3s{
+		Interface: XInterface{Name: "FindWMPurseNew", Type: "w3s"},
+		Request:   t,
+		Client:    w,
 	}
-	w.Request = t
 	result := TestWmPurseResponse{}
-	err := w.getResult(&result)
+	err := X.getResult(&result)
 	return result, err
 }

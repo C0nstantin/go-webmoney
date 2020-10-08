@@ -24,6 +24,11 @@ type PursesResp struct {
 	PurseList []RPurse `xml:"purses"`
 }
 
+func (p Purses) GetSignSource(reqn string) (string, error) {
+
+	return p.Wmid + reqn, nil
+}
+
 type RPurse struct {
 	XMLName     xml.Name `xml:"purse"`
 	PurseName   string   `xml:"pursename"`
@@ -36,14 +41,15 @@ type RPurse struct {
 
 func (w *WmClient) GetPurses4Wmid(p Purses) (PursesResp, error) {
 
-	w.Reqn = Reqn()
-	w.X = X9
-	if w.IsClassic() {
-		w.Sign = p.Wmid + w.Reqn
+	X := W3s{
+		Interface: XInterface{Name: "Purses", Type: "w3s"},
+		Request:   p,
+		Client:    w,
 	}
-	w.Request = p
-	result := PursesResp{}
-	err := w.getResult(&result)
-	return result, err
 
+	result := PursesResp{}
+
+	err := X.getResult(&result)
+
+	return result, err
 }
