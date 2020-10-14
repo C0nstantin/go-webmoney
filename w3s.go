@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/C0nstantin/go-webmoney/wmsigner"
@@ -25,6 +26,7 @@ type W3s struct {
 
 func (w3s *W3s) getResult(result interface{}) error {
 	str, err := w3s.sendRequest()
+	fmt.Println(str)
 	if err != nil {
 		return err
 	}
@@ -91,5 +93,7 @@ func (w3s *W3s) sendRequest() (string, error) {
 		return "", err
 	}
 	body := "<?xml version=\"1.0\" encoding=\"utf-8\"?> \n" + string(output)
+	fmt.Println(url)
+	fmt.Println(body)
 	return w3s.Client.sendRequest(url, body)
 }

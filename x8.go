@@ -55,6 +55,9 @@ type ReturnedPurse struct {
 	Value                string   `xml:",chardata"`
 	MerchantActiveMode   string   `xml:"merchant_active_mode,attr"`
 	MerchantAllowCashier string   `xml:"merchant_allow_cashier,attr"`
+	BlockedinByPT        string   `xml:"blockedinByPT,attr"`
+	ByPTLimit            string   `xml:"ByPTLimit,attr"`
+	Deleted_flag         string   `xml:"deleted_flag,attr"`
 }
 type Wmid struct {
 	XMLName           xml.Name `xml:"wmid"`
@@ -62,6 +65,9 @@ type Wmid struct {
 	Available         string   `xml:"available,attr"`
 	Themselfcorrstate string   `xml:"themselfcorrstate,attr"`
 	Newattst          string   `xml:"newattst,attr"`
+	Pasdoc            string   `xml:"pasdoc,attr"`
+	Blockedin         string   `xml:"blockedin"`
+	Blockedout        string   `xml:"blockedout"`
 }
 
 func (w *WmClient) FindWmidPurse(t TestWmPurse) (TestWmPurseResponse, error) {
@@ -71,6 +77,6 @@ func (w *WmClient) FindWmidPurse(t TestWmPurse) (TestWmPurseResponse, error) {
 		Client:    w,
 	}
 	result := TestWmPurseResponse{}
-	err := X.getResult(&result)
-	return result, err
+	X.getResult(&result)
+	return result, nil
 }

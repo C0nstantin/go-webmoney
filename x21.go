@@ -1,5 +1,7 @@
 package webmoney
 
+import "encoding/xml"
+
 type X21Request struct {
 	merchantRequest
 	LmiPayeePurse       string `xml:"lmi_payee_purse"`
@@ -18,11 +20,16 @@ func (x X21Request) GetSignSource(s string) (string, error) {
 }
 
 type X21Response struct {
-	Slavepurse  string `xml:"slavepurse"`
-	Slavewmid   string `xml:"slavewmid"`
-	Smssecureid string `xml:"smssecureid"`
-	PurseId     string `xml:"trust>purseid,attr"`
-	RealsmsType string `xml:"trust>realsmstype"`
+	merchantResponse
+	Slavepurse  string   `xml:"slavepurse"`
+	Slavewmid   string   `xml:"slavewmid"`
+	Smssecureid string   `xml:"smssecureid"`
+	TrustX21    TrustX21 `xml:"trust"`
+}
+type TrustX21 struct {
+	XMLName     xml.Name `xml:"trust"`
+	PurseId     string   `xml:"purseid,attr"`
+	RealsmsType string   `xml:"realsmstype"`
 }
 
 type X212Request struct {
@@ -30,13 +37,17 @@ type X212Request struct {
 	LmiPurseId          string `xml:"lmi_purseid"`
 	LmiClientnumberCode string `xml:"lmi_clientnumber_code"`
 }
-
+type TrustX212 struct {
+	XMLName    xml.Name `xml:"trust"`
+	Id         string   `xml:"id,attr"`
+	Slavepurse string   `xml:"slavepurse"`
+	Slavewmid  string   `xml:"slavewmid"`
+	Masterwmid string   `xml:"masterwmid"`
+}
 type X212Response struct {
-	Id           string `xml:"trust>id,attr"`
-	Slavepurse   string `xml:"trust>slavepurse"`
-	Slavewmid    string `xml:"trust>slavewmid"`
-	Masterwmid   string `xml:"trust>masterwmid"`
-	Smssentstate string `xml:"smssentstate"`
+	merchantResponse
+	TrustX212    TrustX212 `xml:"trust"`
+	Smssentstate string    `xml:"smssentstate"`
 }
 
 func (x X212Request) GetSignSource(s string) (string, error) {

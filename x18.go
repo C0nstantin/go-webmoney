@@ -46,8 +46,11 @@ func (w *WmClient) TransGet(m X18Request) (MerchantOperation, error) {
 		Interface: XInterface{Name: "TransGet", Type: "merchant"},
 		Client:    w,
 	}
-	result := MerchantOperation{}
+	result := struct {
+		merchantResponse
+		Operation MerchantOperation
+	}{}
 	err := X.getResult(&result)
 
-	return result, err
+	return result.Operation, err
 }

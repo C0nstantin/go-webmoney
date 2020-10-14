@@ -45,12 +45,12 @@ type responseW3s struct {
 	Response interface{} `xml:",any"`
 }
 type merchantRequest struct {
-	XMLName          xml.Name `xml:"merchant.request"`
-	Wmid             string   `xml:"wmid"`
-	Sign             string   `xml:"sign"`
-	Sha256           string   `xml:"sha256"`
-	Md5              string   `xml:"md5"`
-	SecretKey        string   `xml:"secret_key"`
+	XMLName   xml.Name `xml:"merchant.request"`
+	Wmid      string   `xml:"wmid"`
+	Sign      string   `xml:"sign"`
+	Sha256    string   `xml:"sha256"`
+	Md5       string   `xml:"md5"`
+	SecretKey string   `xml:"secret_key"`
 }
 
 func (m *merchantRequest) setWmid(w string) {
@@ -66,11 +66,18 @@ func (m *merchantRequest) setSha256(w string) {
 }
 
 type merchantResponse struct {
-	XmlName xml.Name `xml:"merchant.response"`
-	ErrorLog ErrorLog    `xml:"errorlog"`
-	Retval   int64       `xml:"retval"`
-	Retdest  string      `xml:"retdesc"`
-	Response interface{} `xml:",any"`
+	XmlName  xml.Name `xml:"merchant.response"`
+	ErrorLog ErrorLog `xml:"errorlog"`
+	Retval   int64    `xml:"retval"`
+	Retdesc  string   `xml:"retdesc"`
+	//Response interface{} `xml:",any"`
+}
+
+func (m *merchantResponse) GetRetVal() int64 {
+	return m.Retval
+}
+func (m *merchantResponse) GetRetDesc() string {
+	return m.Retdesc
 }
 
 type ErrorLog struct {
