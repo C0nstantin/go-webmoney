@@ -38,10 +38,13 @@ func (w *WmClient) TransRequest(x X20Request) (MerchantOperation, error) {
 		Interface: XInterface{Name: "TransRequest", Type: "merchant"},
 		Client:    w,
 	}
-	result := MerchantOperation{}
+	result := struct {
+		merchantResponse
+		Operation MerchantOperation
+	}{}
 	err := X.getResult(&result)
 
-	return result, err
+	return result.Operation, err
 }
 
 func (w *WmClient) TransConfirm(x X202Request) (MerchantOperation, error) {
@@ -52,8 +55,11 @@ func (w *WmClient) TransConfirm(x X202Request) (MerchantOperation, error) {
 		Client:    w,
 	}
 
-	result := MerchantOperation{}
+	result := struct {
+		merchantResponse
+		Operation MerchantOperation
+	}{}
 	err := X.getResult(&result)
 
-	return result, err
+	return result.Operation, err
 }

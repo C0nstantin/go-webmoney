@@ -14,7 +14,7 @@ import (
 )
 
 type Trans struct {
-	XMName         xml.Name `xml:"trans"`
+	XMLName        xml.Name `xml:"trans"`
 	InWmTranId     string   `xml:"inwmtranid"`
 	Amount         string   `xml:"amount"`
 	MoneyBackPhone string   `xml:"moneybackphone"`
@@ -25,11 +25,13 @@ func (t Trans) GetSignSource(reqn string) (string, error) {
 }
 
 func (w *WmClient) MoneyBack(t Trans) (Operation, error) {
-	X := W3s {
+
+	X := W3s{
 		Interface: XInterface{Name: "TransMoneyback", Type: "w3s"},
-	  	Request: t,
-	  	Client: w,
+		Request:   t,
+		Client:    w,
 	}
+
 	result := Operation{}
 
 	err := X.getResult(&result)

@@ -19,16 +19,20 @@ type SignedM interface {
 	setSign(string)
 	setSha256(string)
 }
+type RetReturn interface {
+	GetRetDesc() string
+	GetRetVal() int64
+}
 
 type Merchant struct {
 	Request   SignedM //X18Request//merchantRequest
-	Result    merchantResponse
+	Result    RetReturn
 	ResultStr string
 	Interface XInterface
 	Client    *WmClient
 }
 
-func (m *Merchant) getResult(result interface{}) error {
+func (m *Merchant) getResult(result RetReturn) error {
 	str, err := m.sendRequest()
 	if err != nil {
 		return err
@@ -36,18 +40,16 @@ func (m *Merchant) getResult(result interface{}) error {
 	if err := m.parseResponse(result, str); err != nil {
 		return err
 	}
-	if m.Result.Retval != 0 {
-		err := errors.New(strconv.FormatInt(m.Result.Retval, 10) + "   " + m.Result.Retdest)
+	if m.Result.GetRetVal() != 0 {
+		err := errors.New(strconv.FormatInt(m.Result.GetRetVal(), 10) + "   " + m.Result.GetRetDesc())
 		return err
 
 	}
 	return nil
 }
 
-func (m *Merchant) parseResponse(resp interface{}, responseStr string) error {
-	v := merchantResponse{
-		Response: resp,
-	}
+func (m *Merchant) parseResponse(resp RetReturn, responseStr string) error {
+	v := resp
 	fmt.Println(responseStr)
 	r := bytes.NewReader([]byte(responseStr))
 	dec := xml.NewDecoder(r)

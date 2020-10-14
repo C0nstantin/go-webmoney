@@ -20,13 +20,17 @@ func main() {
 		Key:  config.Get("client1.Key").(string),
 		Pass: config.Get("client1.Pass").(string),
 	}
-
-	test := webmoney.TestWmPurse{
-		Wmid:  "128756507061",
-		Purse: "Z303339773989",
+	got := webmoney.X18Request{
+		LmiPayeePurse:    "Z303339773989",
+		LmiPaymentNo:     "881410869",
+		LmiPaymentNoType: "2",
 	}
 
-	result, _ := wmClient.FindWmidPurse(test)
+	result, err := wmClient.TransGet(got)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	fmt.Printf("%#v", result)
 }

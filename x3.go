@@ -24,7 +24,7 @@ type GetOpers struct {
 	DateFinish string   `xml:"datefinish"`
 }
 
-func ( o GetOpers) GetSignSource(reqn string) (string, error) {
+func (o GetOpers) GetSignSource(reqn string) (string, error) {
 	return o.Purse + reqn, nil
 }
 
@@ -44,6 +44,5 @@ func (w *WmClient) GetOperations(o GetOpers) (Operations, error) {
 	result := Operations{}
 
 	err := X.getResult(&result)
-
 	return result, err
 }
