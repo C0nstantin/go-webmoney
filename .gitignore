@@ -1,3 +1,5 @@
 /cert
 /tests/config*
 *.toml
+.idea
+*conf
