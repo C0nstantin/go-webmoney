@@ -14,23 +14,26 @@ import (
 )
 
 type Trans struct {
-	XMName         xml.Name `xml:"trans"`
+	XMLName        xml.Name `xml:"trans"`
 	InWmTranId     string   `xml:"inwmtranid"`
 	Amount         string   `xml:"amount"`
 	MoneyBackPhone string   `xml:"moneybackphone"`
 }
 
-func (w *WmClient) MoneyBack(t Trans) (Operation, error) {
-	w.Reqn = Reqn()
-	w.X = X14
+func (t Trans) GetSignSource(reqn string) (string, error) {
+	return reqn + t.InWmTranId + t.Amount, nil
+}
 
-	if w.IsClassic() {
-		w.Sign = w.Reqn + t.InWmTranId + t.Amount
+func (w *WmClient) MoneyBack(t Trans) (Operation, error) {
+
+	X := W3s{
+		Interface: XInterface{Name: "TransMoneyback", Type: "w3s"},
+		Request:   t,
+		Client:    w,
 	}
 
-	w.Request = t
 	result := Operation{}
 
-	err := w.getResult(&result)
+	err := X.getResult(&result)
 	return result, err
 }

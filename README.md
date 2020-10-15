@@ -407,10 +407,10 @@ type OutInvoicesResp struct {
 ```go
 
 //get trastlist
-tl := webmoney.Trastlist {
+tl := webmoney.Trustlist {
     Wmid:"000000000000",
   }
-result,err := wmCl.GetTrastList(tl)
+result,err := wmCl.GetTrustList(tl)
 /*
 result implemenst
 
@@ -485,8 +485,6 @@ type PurseResponse struct {
 ```
 
 
-@TODO
------
--X17-X22
--Examples for all interfaces
+##x17-x23
+see examples file
 

@@ -20,6 +20,10 @@ type Purse struct {
 	Desc      string   `xml:"desc"`
 }
 
+func (p Purse) GetSignSource(reqn string) (string, error) {
+	return p.Wmid + p.PurseType + reqn, nil
+}
+
 type PurseResponse struct {
 	XMLName   xml.Name `xml:"purse"`
 	Id        string   `xml:"id,attr"`
@@ -29,13 +33,13 @@ type PurseResponse struct {
 }
 
 func (w *WmClient) CreatePurse(p Purse) (PurseResponse, error) {
-	w.Reqn = Reqn()
-	w.X = X16
-	if w.IsClassic() {
-		w.Sign = p.Wmid + p.PurseType + w.Reqn
+	X := W3s{
+		Interface: XInterface{Name: "CreatePurse", Type: "w3s"},
+		Client:    w,
+		Request:   p,
 	}
-	w.Request = p
+
 	result := PurseResponse{}
-	err := w.getResult(&result)
+	err := X.getResult(&result)
 	return result, err
 }

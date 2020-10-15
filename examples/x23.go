@@ -20,13 +20,16 @@ func main() {
 		Key:  config.Get("client1.Key").(string),
 		Pass: config.Get("client1.Pass").(string),
 	}
-
-	test := webmoney.TestWmPurse{
-		Wmid:  "128756507061",
-		Purse: "Z303339773989",
+	got := webmoney.InvoiceRefuse{
+		Wmid:    "128756507061",
+		Wminvid: "882271555",
 	}
 
-	result, _ := wmClient.FindWmidPurse(test)
+	result, err := wmClient.RefuseInvoice(got)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	fmt.Printf("%#v", result)
 }
