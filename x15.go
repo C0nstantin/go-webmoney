@@ -18,6 +18,10 @@ type TrustList struct {
 	Wmid    string   `xml:"wmid"`
 }
 
+func (t TrustList) GetSignSource(reqn string) (string, error) {
+	return t.Wmid + reqn, nil
+}
+
 type TrustListResponse struct {
 	XMLName   xml.Name `xml:"trustlist"`
 	Cnt       string   `xml:"cnt,attr"`
@@ -40,7 +44,7 @@ type Trust struct {
 	DSum        string   `xml:"dsum"`
 	WSum        string   `xml:"wsum"`
 	MSum        string   `xml:"msum"`
-	LastSumDate string   `xml:lastsumdate`
+	LastSumDate string   `xml:"lastsumdate"`
 }
 
 type TrustSave struct {
@@ -58,35 +62,37 @@ type TrustSave struct {
 	MonthLimit string   `xml:"monthlimit"`
 }
 
+func (t TrustSave) GetSignSource(reqn string) (string, error) {
+	return t.Purse + t.MasterWmid + reqn, nil
+}
+
 //func GetTrastList
 func (w *WmClient) GetTrustList(t TrustList) (TrustListResponse, error) {
-	w.Reqn = Reqn()
-	if w.Wmid != t.Wmid {
-		w.X = X152
-	} else {
-		w.X = X15
-	}
-	if w.IsClassic() {
-		w.Sign = t.Wmid + w.Reqn
-	}
-	w.Request = t
-	result := TrustListResponse{}
-	err := w.getResult(&result)
-	return result, err
+	var InterfaceName string
 
+	if w.Wmid != t.Wmid {
+		InterfaceName = "TrustList2"
+	} else {
+		InterfaceName = "TrustList"
+	}
+	X := W3s{
+		Interface: XInterface{Name: InterfaceName, Type: "w3s"},
+		Request:   t,
+		Client:    w,
+	}
+	result := TrustListResponse{}
+	err := X.getResult(&result)
+	return result, err
 }
 
 func (w *WmClient) SetTrust(t TrustSave) (Trust, error) {
-	w.Reqn = Reqn()
-	w.X = X153
-	if w.IsClassic() {
-		w.Sign = w.Wmid + t.Purse + t.MasterWmid + w.Reqn
+	X := W3s{
+		Interface: XInterface{Name: "TrustSave2", Type: "w3s"},
+		Request:   t,
+		Client:    w,
 	}
 
-	w.Request = t
 	result := Trust{}
-	err := w.getResult(&result)
+	err := X.getResult(&result)
 	return result, err
-
 }
-

@@ -18,32 +18,41 @@ type Purses struct {
 	Wmid    string   `xml:"wmid"`
 }
 
+func (p Purses) GetSignSource(reqn string) (string, error) {
+
+	return p.Wmid + reqn, nil
+}
+
 type PursesResp struct {
 	XMLName   xml.Name `xml:"purses"`
 	Cnt       string   `xml:"cnt,attr"`
-	PurseList []RPurse `xml:"purses"`
+	PurseList []RPurse `xml:"purse"`
 }
 
 type RPurse struct {
-	XMLName     xml.Name `xml:"purse"`
-	PurseName   string   `xml:"pursename"`
-	Amount      string   `xml:"amount"`
-	Desc        string   `xml:"desc"`
-	Outsideopen string   `xml:"outsideopen"`
-	LastIntr    string   `xml:"lastintr"`
-	LastOuttr   string   `xml:"lastouttr"`
+	XMLName          xml.Name `xml:"purse"`
+	Id               string   `xml:"id,attr"`
+	PurseName        string   `xml:"pursename"`
+	Amount           string   `xml:"amount"`
+	Desc             string   `xml:"desc"`
+	Outsideopen      string   `xml:"outsideopen"`
+	Outsideopenstate string   `xml:"outsideopenstate"`
+	Byptlimit        string   `xml:"byptlimit"`
+	LastIntr         string   `xml:"lastintr"`
+	LastOuttr        string   `xml:"lastouttr"`
 }
 
 func (w *WmClient) GetPurses4Wmid(p Purses) (PursesResp, error) {
 
-	w.Reqn = Reqn()
-	w.X = X9
-	if w.IsClassic() {
-		w.Sign = p.Wmid + w.Reqn
+	X := W3s{
+		Interface: XInterface{Name: "Purses", Type: "w3s"},
+		Request:   p,
+		Client:    w,
 	}
-	w.Request = p
-	result := PursesResp{}
-	err := w.getResult(&result)
-	return result, err
 
+	result := PursesResp{}
+
+	err := X.getResult(&result)
+
+	return result, err
 }

@@ -7,6 +7,16 @@
 // Sending invoice from merchant to customer.
 // https://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X1
 
+//use in client
+/*w = new WmClient {Wmid: "", Cert:"", Key:""}
+
+s,_ := w.SendInvoice(new Invoice{
+	OrderId: "",
+	CustomerWmid:"",
+	....
+})
+s.Ts*/
+
 package webmoney
 
 import (
@@ -27,6 +37,26 @@ type Invoice struct {
 	Lmi_shop_id  string   `xml:"lmi_shop_id"`
 }
 
+func (i Invoice) GetSignSource(reqn string) (string, error) {
+	desc, err := Utf8ToWin(i.Desc)
+	if err != nil {
+		return "", err
+	}
+	address, err := Utf8ToWin(i.Address)
+	if err != nil {
+		return "", err
+	}
+	return string(i.OrderId) +
+		i.CustomerWmid +
+		i.StorePurse +
+		i.Amount +
+		desc +
+		address +
+		i.Period +
+		i.Expiration +
+		reqn, nil
+}
+
 type InvoiceResponse struct {
 	Id           string `xml:"id,attr"`
 	Ts           string `xml:"ts,attr"`
@@ -45,32 +75,12 @@ type InvoiceResponse struct {
 }
 
 func (w *WmClient) SendInvoice(i Invoice) (InvoiceResponse, error) {
-	w.Reqn = Reqn()
-	w.X = X1
-	if w.IsClassic() {
-		//orderid+customerwmid+storepurse+amount+desc+address+period+expiration+reqn
-		desc, err := Utf8ToWin(i.Desc)
-		if err != nil {
-			return InvoiceResponse{}, err
-		}
-		address, err := Utf8ToWin(i.Address)
-		if err != nil {
-			return InvoiceResponse{}, err
-		}
-
-		w.Sign = string(i.OrderId) +
-			i.CustomerWmid +
-			i.StorePurse +
-			i.Amount +
-			desc +
-			address +
-			i.Period +
-			i.Expiration +
-			w.Reqn
+	X := W3s{
+		Request:   i,
+		Interface: XInterface{Name: "Invoice", Type: "w3s"},
+		Client:    w,
 	}
-	w.Request = i
 	result := InvoiceResponse{}
-
-	err := w.getResult(&result)
+	err := X.getResult(&result)
 	return result, err
 }

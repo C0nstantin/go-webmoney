@@ -24,22 +24,25 @@ type GetOpers struct {
 	DateFinish string   `xml:"datefinish"`
 }
 
+func (o GetOpers) GetSignSource(reqn string) (string, error) {
+	return o.Purse + reqn, nil
+}
+
 type Operations struct {
 	XMLName       xml.Name    `xml:"operations"`
 	OperationList []Operation `xml:"operation"`
 }
 
 func (w *WmClient) GetOperations(o GetOpers) (Operations, error) {
-	w.Reqn = Reqn()
-	w.X = X3
-	if w.IsClassic() {
-		w.Sign = o.Purse +
-			w.Reqn
+
+	X := W3s{
+		Interface: XInterface{Name: "Operations", Type: "w3s"},
+		Request:   o,
+		Client:    w,
 	}
-	w.Request = o
+
 	result := Operations{}
 
-	err := w.getResult(&result)
-
+	err := X.getResult(&result)
 	return result, err
 }

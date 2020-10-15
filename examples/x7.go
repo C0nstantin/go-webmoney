@@ -1,18 +1,37 @@
-//How use wmsigner
-
 package main
 
+import (
+	"fmt"
+	"github.com/C0nstantin/go-webmoney"
+	"github.com/pelletier/go-toml"
+	"io/ioutil"
+	"log"
+)
 
-import "github.com/C0nstantin/webmoney-go/pkg/webmoney/wmsigner"
-
-func main(){
-	str := "source string"
-	signer := wmsigner.newsigner("wmid","password","key_string")
-	sign_str,err  := signer.sign(str)
-	if(err != nil) {
-		// do something if error})
+func main() {
+	date, err := ioutil.ReadFile("examples/conf.toml")
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	//use sign_str
+	config, _ := toml.Load(string(date))
+	wmClient := webmoney.WmClient{
+		Wmid: config.Get("client1.Wmid").(string),
+		Key:  config.Get("client1.Key").(string),
+		Pass: config.Get("client1.Pass").(string),
+	}
 
+	test := webmoney.TestSignRequest{
+		Wmid: "128756507061",
+		Plan: "-",
+		Sign: "-",
+	}
+
+	result, err := wmClient.TestSign(test)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Printf("%#v", result)
 }

@@ -1,5 +1,9 @@
+github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/paulrosania/go-charset v0.0.0-20190326053356-55c9d7a5834c h1:P6XGcuPTigoHf4TSu+3D/7QOQ1MbL6alNwrGhcW7sKw=
 github.com/paulrosania/go-charset v0.0.0-20190326053356-55c9d7a5834c/go.mod h1:YnNlZP7l4MhyGQ4CBRwv6ohZTPrUJJZtEv4ZgADkbs4=
+github.com/pelletier/go-toml v1.8.1 h1:1Nf83orprkJyknT6h7zbuEGUEjcyVlCxSUGTENmNCRM=
+github.com/pelletier/go-toml v1.8.1/go.mod h1:T2/BmBdy8dvIRq1a/8aqjN41wvWlN4lrapLU/GW4pbc=
 github.com/qiniu/iconv v0.0.0-20160413084200-e9ee0ddd1a3a h1:GrDe9RL3K3/Kh422zsTUwIEVHV4N4QmkDn+0S/rH3b0=
 github.com/qiniu/iconv v0.0.0-20160413084200-e9ee0ddd1a3a/go.mod h1:70MR/wDOhFn6Yf10KP+jVqF0W16hKVhdhy38IMuNzKM=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=

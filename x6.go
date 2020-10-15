@@ -12,6 +12,22 @@ type SendMsg struct {
 	MsgText      string   `xml:"msgtext"`
 	OnlyAuth     int      `xml:"onlyauth"`
 }
+
+func (s SendMsg) GetSignSource(reqn string) (string, error) {
+	subject, err := Utf8ToWin(strings.Trim(s.MsgSubj, " "))
+	if err != nil {
+		return "", err
+	}
+
+	text, err := Utf8ToWin(strings.Trim(s.MsgText, " "))
+	if err != nil {
+		return "", err
+	}
+
+	return s.ReceiverWmid + reqn + text + subject, nil
+
+}
+
 type SendMsgResponse struct {
 	XMLName      xml.Name `xml:"message"`
 	MessageId    int      `xml:"id,attr"`
@@ -22,22 +38,14 @@ type SendMsgResponse struct {
 }
 
 func (w *WmClient) SendMessage(s SendMsg) (SendMsgResponse, error) {
-	w.Reqn = Reqn() //in request metrhod
-	w.X = X6
-	subject := strings.Trim(s.MsgSubj, " ")
-	text := strings.Trim(s.MsgText, " ")
 
-	if w.IsClassic() {
-		subject, _ = Utf8ToWin(subject)
-		text, _ = Utf8ToWin(text)
-		w.Sign = s.ReceiverWmid + w.Reqn + text + subject
-		text, _ = WinToUtf8(text)
-		subject, _ = WinToUtf8(subject)
+	X := W3s{
+		Request:   s,
+		Interface: XInterface{Name: "SendMsg", Type: "w3s"},
+		Client:    w,
 	}
 
-	w.Request = s
 	result := SendMsgResponse{}
-
-	err := w.getResult(&result)
+	err := X.getResult(&result)
 	return result, err
 }

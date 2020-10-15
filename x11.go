@@ -60,24 +60,24 @@ type UserInfo struct {
 	Pdate     string   `xml:"pdate,attr"`
 	Pdateend  string   `xml:"pdateend,attr"`
 	Pcountry  string   `xml:"pcountry,attr"`
-	Pbywhom   string   `xml:"pbywhom,attr"`
-	Inn       string   `xml:"inn,attr"`
-	Bplace    string   `xml:"bplace,attr"`
-	Bday      string   `xml:"bday,attr"`
-	Bmonth    string   `xml:"bmonth,attr"`
-	Byear     string   `xml:"byear,attr"`
-	Icq       string   `xml:"icq,attr"`
-	Email     string   `xml:"email,attr"`
-	Web       string   `xml:"web,attr"`
-	Phone     string   `xml:"phone,attr"`
-	Cap_owner string   `xml:"cap_owner,attr"`
-	Pasdoc    string   `xml:"pasdoc,attr"`
-	Regdoc    string   `xml:"regdoc,attr"`
-	Inndoc    string   `xml:"inndoc,attr"`
-	Photoid   string   `xml:"phoneid,attr"`
-	Jabberid  string   `xml:"jabberid,attr"`
-	Sex       string   `xml:"sex,attr"`
-	Infoopen  string   `xml:"infoopen,attr"`
+	Pbywhom  string `xml:"pbywhom,attr"`
+	Inn      string `xml:"inn,attr"`
+	Bplace   string `xml:"bplace,attr"`
+	Bday     string `xml:"bday,attr"`
+	Bmonth   string `xml:"bmonth,attr"`
+	Byear    string `xml:"byear,attr"`
+	Icq      string `xml:"icq,attr"`
+	Email    string `xml:"email,attr"`
+	Web      string `xml:"web,attr"`
+	Phone    string `xml:"phone,attr"`
+	CapOwner string `xml:"cap_owner,attr"`
+	Pasdoc   string `xml:"pasdoc,attr"`
+	Regdoc   string `xml:"regdoc,attr"`
+	Inndoc   string `xml:"inndoc,attr"`
+	Photoid  string `xml:"phoneid,attr"`
+	Jabberid string `xml:"jabberid,attr"`
+	Sex      string `xml:"sex,attr"`
+	Infoopen string `xml:"infoopen,attr"`
 }
 
 type Attestat struct {
