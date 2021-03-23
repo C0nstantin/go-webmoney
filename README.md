@@ -467,7 +467,7 @@ p := webmoney.Purse{
     PurseType:"Z",
     Desc:"test",
   }
-result,error := wmCl.CreatePurese(p)
+result,error := wmCl.CreatePurse(p)
 /*
 result implements 
 
