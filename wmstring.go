@@ -16,12 +16,7 @@ type WmString string
 
 func (w WmString) IsCompatibleWithWmXml() bool {
 	for _, ch := range w {
-		if (ch >= '\u0400' && ch <= '\u052F') ||
-			(ch >= '\u0000' && ch <= '\u007F') ||
-			ch == '\u2116' || ch == '\u2013' ||
-			ch == '\u2212' || ch == '\u00AB' ||
-			ch == '\u00BB' || ch == '\u2010' ||
-			ch == '\u2013' || ch == '\u2014' {
+		if ch >= '\u0400' && ch <= '\u052F' || ch >= '\u0000' && ch <= '\u007F' || ch == '\u2116' || ch == '\u2212' || ch == '\u00AB' || ch == '\u00BB' || ch == '\u2010' || ch == '\u2013' || ch == '\u2014' {
 			continue
 		}
 		return false
