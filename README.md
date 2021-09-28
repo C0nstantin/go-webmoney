@@ -13,7 +13,7 @@ XML interfaces are basically text message interfaces that send data via HTTPS pr
 ```go 
 package main
 
-import "github.com/C0nstatin/go-webmoney"
+import "github.com/C0nstantin/go-webmoney"
 //...
 ```
 
