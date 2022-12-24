@@ -28,7 +28,7 @@ func (w3s *W3s) getResult(result interface{}) error {
 	str, err := w3s.sendRequest()
 	fmt.Println(str)
 	if err != nil {
-		return err
+		return fmt.Errorf("error after send request %w ", err)
 	}
 	if err := w3s.parseResponse(result, str); err != nil {
 		return err
@@ -50,7 +50,7 @@ func (w3s *W3s) parseResponse(resp interface{}, responseStr string) error {
 	err := dec.Decode(&v)
 	w3s.Result = v
 	if err != nil {
-		return err
+		return fmt.Errorf("error decode xml %w", err)
 	}
 	return nil
 }
@@ -66,13 +66,11 @@ func (w3s *W3s) sendRequest() (string, error) {
 
 		s := wmsigner.NewSigner(w3s.Client.Wmid, w3s.Client.Pass, w3s.Client.Key)
 		str, err := w3s.Request.GetSignSource(reqn)
-
+		if err != nil {
+			return "", fmt.Errorf("error get sign %w", err)
+		}
 		if w3s.Interface.Name == "ClassicAuth" || w3s.Interface.Name == "TrustSave2" {
 			str = w3s.Client.Wmid + str
-		}
-
-		if err != nil {
-			return "", err
 		}
 
 		if result, err := s.Sign(str); err != nil {
@@ -90,7 +88,7 @@ func (w3s *W3s) sendRequest() (string, error) {
 	v.Request = w3s.Request
 	output, err := xml.MarshalIndent(v, "  ", "    ")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error marshal body for request %w", err)
 	}
 	body := "<?xml version=\"1.0\" encoding=\"utf-8\"?> \n" + string(output)
 	fmt.Println(url)
