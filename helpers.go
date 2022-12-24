@@ -17,7 +17,11 @@ import (
 // each subsequent more then the previews
 func Reqn() string {
 	nanoseconds := fmt.Sprintf("%03.f", float32(time.Now().Nanosecond()/1000000))
-	return time.Now().Local().Format("20060102150405") + nanoseconds
+	loc, err := time.LoadLocation("Europe/Moscow")
+	if err != nil {
+		panic(err)
+	}
+	return time.Now().In(loc).Format("20060102150405") + nanoseconds
 }
 
 // encode string from utf8 to cp1251
