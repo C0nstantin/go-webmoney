@@ -14,7 +14,7 @@ import (
 )
 
 // function return reqn params for webmoney request
-// each subsequent more then the previews
+// each subsequent more as the previews
 func Reqn() string {
 	nanoseconds := fmt.Sprintf("%03.f", float32(time.Now().Nanosecond()/1000000))
 	loc, err := time.LoadLocation("Europe/Moscow")
