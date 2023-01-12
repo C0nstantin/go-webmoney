@@ -7,10 +7,8 @@ package webmoney
 
 import (
 	"fmt"
-	"log"
+	"golang.org/x/text/encoding/charmap"
 	"time"
-
-	"github.com/qiniu/iconv"
 )
 
 // function return reqn params for webmoney request
@@ -24,16 +22,21 @@ func Reqn() string {
 	return time.Now().In(loc).Format("20060102150405") + nanoseconds
 }
 
-// encode string from utf8 to cp1251
+// Utf8ToWin encode string from utf8 to cp1251
 func Utf8ToWin(s string) (string, error) {
-	d, err := iconv.Open("cp1251//IGNORE", "utf8")
+	encoder := charmap.Windows1251.NewEncoder()
+	return encoder.String(s)
+
+	/*d, err := iconv.Open("cp1251//IGNORE", "utf8")
 	if err != nil {
 		return "", err
 	}
 	defer d.Close()
 	return d.ConvString(s), nil
+	*/
 }
 
+/*
 func Str4Sign(s string) string {
 	res, err := Utf8ToWin(s)
 	if err != nil {
@@ -52,6 +55,8 @@ func WinToUtf8(s string) (string, error) {
 	defer d.Close()
 	return d.ConvString(s), nil
 }
+
+*/
 
 // Root ca for webmoney requests
 const ROOT_CA = `
