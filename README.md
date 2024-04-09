@@ -488,3 +488,13 @@ type PurseResponse struct {
 ##x17-x23
 see examples file
 
+## Custom domains
+If you need change urls for api requests please use this environment variables 
+```go
+//for merchant requests
+os.Setenv("MERCHANT_DOMAIN", "merchant.web.money") //merchant.web.money is a default value
+//if you use classic (winpro) auth
+os.Setenv("CLASSIC_DOMAIN", "w3s.webmoney.com") // w3s.webmoney.com is a default value
+//if you use light (webpro) auth
+os.Setenv("LIGHT_DOMAIN", "w3s.webmoney.com") // w3s.webmoney.com is a default value
+```

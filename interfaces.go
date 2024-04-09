@@ -1,6 +1,10 @@
 package webmoney
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+	"fmt"
+	"os"
+)
 
 type XInterface struct {
 	Name string
@@ -8,21 +12,34 @@ type XInterface struct {
 }
 
 func (x *XInterface) GetUrl(isClassic bool) string {
-	var url string
+	merchantDomain := "merchant.web.money"
+	if v, ok := os.LookupEnv("MERCHANT_DOMAIN"); ok {
+		merchantDomain = v
+	}
+	classicDomain := "w3s.webmoney.com"
+	if v, ok := os.LookupEnv("CLASSIC_DOMAIN"); ok {
+		classicDomain = v
+	}
+	lightDomain := "w3s.webmoney.com"
+	if v, ok := os.LookupEnv("LIGHT_DOMAIN"); ok {
+		lightDomain = v
+	}
+
 	if x.Type == "w3s" || x.Type == "passport" {
 		if isClassic {
-			url = "https://w10s.webmoney.ru/asp/XML" + x.Name + ".asp"
+			return fmt.Sprintf("https://%s/asp/XML%s.asp", classicDomain, x.Name)
 		} else {
 			if x.Name == "FindWMPurseNew" {
-				url = "https://w10s.wmtransfer.com/asp/XMLFindWMPurseCertNew.asp"
+				return fmt.Sprintf("https://%s/asp/XMLFindWMPurseNew.asp", lightDomain)
+
 			} else {
-				url = "https://w10s.wmtransfer.com/asp/XML" + x.Name + "Cert.asp"
+				return fmt.Sprintf("https://%s/asp/XML%sCert.asp", lightDomain, x.Name)
 			}
 		}
 	} else if x.Type == "merchant" {
-		url = "https://merchant.webmoney.ru/conf/xml/XML" + x.Name + ".asp"
+		return fmt.Sprintf("https://%s/conf/xml/XML%s.asp", merchantDomain, x.Name)
 	}
-	return url
+	panic("unknown interface type " + x.Type)
 }
 
 type requestW3s struct {
@@ -33,7 +50,7 @@ type requestW3s struct {
 	Request interface{} `xml:",>"`
 }
 
-//base struct for all response
+// base struct for all response
 type responseW3s struct {
 	XMLName  xml.Name    `xml:"w3s.response"`
 	Reqn     string      `xml:"reqn"`

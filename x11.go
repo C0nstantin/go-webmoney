@@ -105,7 +105,7 @@ func GetInfoWmid(wmid string) (ResponseX11, error) {
 	if err != nil {
 		return v1, err
 	}
-	resp, err := http.Post("https://apipassport.webmoney.ru/asp/XMLGetWMPassport.asp", "text/xml", strings.NewReader(string(out)))
+	resp, err := http.Post("https://passport.web.money/asp/XMLGetWMPassport.asp", "text/xml", strings.NewReader(string(out)))
 	if err != nil {
 		return v1, err
 	}

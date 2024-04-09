@@ -63,7 +63,6 @@ func (w3s *W3s) sendRequest() (string, error) {
 	}
 
 	if w3s.Client.IsClassic() {
-
 		s := wmsigner.NewSigner(w3s.Client.Wmid, w3s.Client.Pass, w3s.Client.Key)
 		str, err := w3s.Request.GetSignSource(reqn)
 		if err != nil {
@@ -80,9 +79,7 @@ func (w3s *W3s) sendRequest() (string, error) {
 		}
 
 	} else {
-
 		v.Sign = ""
-
 	}
 	url := w3s.Interface.GetUrl(w3s.Client.IsClassic())
 	v.Request = w3s.Request

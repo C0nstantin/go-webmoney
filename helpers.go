@@ -27,36 +27,7 @@ func Utf8ToWin(s string) (string, error) {
 	encoder := charmap.Windows1251.NewEncoder()
 	return encoder.String(s)
 
-	/*d, err := iconv.Open("cp1251//IGNORE", "utf8")
-	if err != nil {
-		return "", err
-	}
-	defer d.Close()
-	return d.ConvString(s), nil
-	*/
 }
-
-/*
-func Str4Sign(s string) string {
-	res, err := Utf8ToWin(s)
-	if err != nil {
-		log.Fatal(err)
-		return ""
-	}
-	return res
-}
-
-// entrode string from cp1251 to utf8
-func WinToUtf8(s string) (string, error) {
-	d, err := iconv.Open("utf8", "cp1251")
-	if err != nil {
-		return "", err
-	}
-	defer d.Close()
-	return d.ConvString(s), nil
-}
-
-*/
 
 // Root ca for webmoney requests
 const ROOT_CA = `

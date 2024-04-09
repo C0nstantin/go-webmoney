@@ -1,7 +1,6 @@
 package tests
 
 import "testing"
-import "webmoney"
 
 func TestClassicX2(t *testing.T) {
 	wmClientClassic := webmoney.WmClient{
