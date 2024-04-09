@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"github.com/paulrosania/go-charset/charset"
 	_ "github.com/paulrosania/go-charset/data"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -105,7 +107,11 @@ func GetInfoWmid(wmid string) (ResponseX11, error) {
 	if err != nil {
 		return v1, err
 	}
-	resp, err := http.Post("https://passport.web.money/asp/XMLGetWMPassport.asp", "text/xml", strings.NewReader(string(out)))
+	apiPassportDomain := "apipassport.web.money"
+	if v, ok := os.LookupEnv("API_PASSPORT_DOMAIN"); ok {
+		apiPassportDomain = v
+	}
+	resp, err := http.Post(fmt.Sprintf("https://%s/asp/XMLGetWMPassport.asp", apiPassportDomain), "text/xml", strings.NewReader(string(out)))
 	if err != nil {
 		return v1, err
 	}

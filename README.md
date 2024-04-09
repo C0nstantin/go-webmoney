@@ -497,4 +497,6 @@ os.Setenv("MERCHANT_DOMAIN", "merchant.web.money") //merchant.web.money is a def
 os.Setenv("CLASSIC_DOMAIN", "w3s.webmoney.com") // w3s.webmoney.com is a default value
 //if you use light (webpro) auth
 os.Setenv("LIGHT_DOMAIN", "w3s.webmoney.com") // w3s.webmoney.com is a default value
+// for passport request 
+os.Setenv("API_PASSPORT_DOMAIN", apipassort.web.money)
 ```
