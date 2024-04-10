@@ -13,14 +13,14 @@ type XInterface struct {
 
 func (x *XInterface) GetUrl(isClassic bool) string {
 	merchantDomain := "merchant.web.money"
+	classicDomain := "w3s.web.money"
+	lightDomain := "w3s.web.money"
 	if v, ok := os.LookupEnv("MERCHANT_DOMAIN"); ok {
 		merchantDomain = v
 	}
-	classicDomain := "w3s.webmoney.com"
 	if v, ok := os.LookupEnv("CLASSIC_DOMAIN"); ok {
 		classicDomain = v
 	}
-	lightDomain := "w3s.webmoney.com"
 	if v, ok := os.LookupEnv("LIGHT_DOMAIN"); ok {
 		lightDomain = v
 	}

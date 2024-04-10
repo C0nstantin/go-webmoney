@@ -494,9 +494,9 @@ If you need change urls for api requests please use this environment variables
 //for merchant requests
 os.Setenv("MERCHANT_DOMAIN", "merchant.web.money") //merchant.web.money is a default value
 //if you use classic (winpro) auth
-os.Setenv("CLASSIC_DOMAIN", "w3s.webmoney.com") // w3s.webmoney.com is a default value
+os.Setenv("CLASSIC_DOMAIN", "w3s.webmoney.com") // w10s.web.money is a default value
 //if you use light (webpro) auth
-os.Setenv("LIGHT_DOMAIN", "w3s.webmoney.com") // w3s.webmoney.com is a default value
+os.Setenv("LIGHT_DOMAIN", "w3s.webmoney.com") // w10s.web.money is a default value
 // for passport request 
-os.Setenv("API_PASSPORT_DOMAIN", apipassort.web.money)
+os.Setenv("API_PASSPORT_DOMAIN", "apipassort.web.money")
 ```
