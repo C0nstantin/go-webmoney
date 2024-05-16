@@ -137,3 +137,11 @@ func GetInfoWmid(wmid string) (ResponseX11, error) {
 	}
 
 }
+
+func (client *WmClient) GetInfoWmid(wmid string) (ResponseX11, error) {
+	return GetInfoWmid(wmid)
+}
+
+func (client *WmClient) IssetWmid(wmid string) (bool, error) {
+	return IssetWmid(wmid)
+}
