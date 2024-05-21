@@ -26,7 +26,7 @@ type W3s struct {
 
 func (w3s *W3s) getResult(result interface{}) error {
 	str, err := w3s.sendRequest()
-	fmt.Println(str)
+	DebugLog(str)
 	if err != nil {
 		return fmt.Errorf("error after send request %w ", err)
 	}
@@ -88,7 +88,7 @@ func (w3s *W3s) sendRequest() (string, error) {
 		return "", fmt.Errorf("error marshal body for request %w", err)
 	}
 	body := "<?xml version=\"1.0\" encoding=\"utf-8\"?> \n" + string(output)
-	fmt.Println(url)
-	fmt.Println(body)
+	DebugLog("w3s request: to " + url)
+	DebugLog("return body: ", body)
 	return w3s.Client.sendRequest(url, body)
 }

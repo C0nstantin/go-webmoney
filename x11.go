@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/paulrosania/go-charset/charset"
 	_ "github.com/paulrosania/go-charset/data"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -115,7 +115,7 @@ func GetInfoWmid(wmid string) (ResponseX11, error) {
 	if err != nil {
 		return v1, err
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
 		return v1, err
@@ -123,11 +123,14 @@ func GetInfoWmid(wmid string) (ResponseX11, error) {
 	r := bytes.NewReader(body)
 	dec := xml.NewDecoder(r)
 	dec.CharsetReader = charset.NewReader
-	dec.Decode(&v1)
+	err = dec.Decode(&v1)
+	if err != nil {
+		return ResponseX11{}, err
+	}
 
 	if v1.CertInfo.Attestat.Recalled == "1" {
 
-		return v1, errors.New("Attestat is blocked")
+		return v1, errors.New("attest is blocked")
 	}
 
 	if v1.CertInfo.Attestat.TID != "" {

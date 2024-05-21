@@ -20,14 +20,10 @@ import (
 	"regexp"
 )
 
-/*================= public package function ==========================*/
-
-/*return wmsigner object for next using*/
-func NewSigner(wmid string, pass string, key string) *wmsigner {
-	return &wmsigner{wmid, pass, key, nil}
+// NewSigner return wmsigner object with wmid, pass and key
+func NewSigner(wmid string, pass string, key string) *Wmsigner {
+	return &Wmsigner{wmid, pass, key, nil}
 }
-
-/*================ private package function =========================*/
 
 /*
 function hashing  butes slice to md4
@@ -41,7 +37,7 @@ func md4Hash(buff []byte) []byte {
 /*
 xor two byte slice
 */
-func xor_wm(buff []byte, hash []byte) []byte {
+func xorWm(buff []byte, hash []byte) []byte {
 	b := bytes.NewBuffer([]byte{})
 	for i := 0; i < len(buff); i++ {
 		b.WriteByte(buff[i] ^ hash[i%len(hash)])
@@ -63,23 +59,22 @@ func reversebyte(s []byte) []byte {
 /*create bignum object from bytes.Buffer*/
 func readBn(b *bytes.Buffer) *big.Int {
 	var count uint16
-	binary.Read(b, binary.LittleEndian, &count)
+	_ = binary.Read(b, binary.LittleEndian, &count)
+
 	data := reversebyte(b.Next(int(count)))
 	i := new(big.Int)
 	i.SetBytes(data)
 	return i
 }
 
-/*================= wmsigner object ==============================*/
-
-type wmsigner struct {
+type Wmsigner struct {
 	wmid string
 	pass string
 	key  string
 	err  error
 }
 
-func (w *wmsigner) Sign(data string) (string, error) {
+func (w *Wmsigner) Sign(data string) (string, error) {
 
 	//check wmid
 	if matched, _ := regexp.MatchString("[0-9]{12}", w.wmid); !matched {
@@ -147,7 +142,7 @@ func (w *wmsigner) Sign(data string) (string, error) {
 
 }
 
-func (w *wmsigner) initkey() (*big.Int, *big.Int) {
+func (w *Wmsigner) initkey() (*big.Int, *big.Int) {
 	data, _ := base64.StdEncoding.DecodeString(w.key)
 
 	r := bytes.NewBuffer(data)
@@ -179,7 +174,6 @@ func (w *wmsigner) initkey() (*big.Int, *big.Int) {
 			w.err = errors.New("invalid crc")
 			return w.initkey()
 		} else {
-			fmt.Println(w.err)
 			return nil, nil
 
 		}
@@ -192,9 +186,9 @@ func (w *wmsigner) initkey() (*big.Int, *big.Int) {
 
 }
 
-func (w *wmsigner) encryptKey(buff []byte) []byte {
+func (w *Wmsigner) encryptKey(buff []byte) []byte {
 	hashResult := md4Hash([]byte(w.wmid + w.pass))
-	return xor_wm(buff, hashResult)
+	return xorWm(buff, hashResult)
 }
 
 func add_tobegin(b []byte, bb []byte) {

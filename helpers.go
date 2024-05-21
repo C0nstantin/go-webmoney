@@ -8,6 +8,8 @@ package webmoney
 import (
 	"fmt"
 	"golang.org/x/text/encoding/charmap"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -26,7 +28,18 @@ func Reqn() string {
 func Utf8ToWin(s string) (string, error) {
 	encoder := charmap.Windows1251.NewEncoder()
 	return encoder.String(s)
+}
 
+func DebugLog(v ...interface{}) {
+	if os.Getenv("DEBUG") != "" || strings.ToUpper(os.Getenv("LOG_LEVEL")) == "TRACE" {
+		fmt.Println(v...)
+	}
+}
+
+func DebugLogf(format string, v ...interface{}) {
+	if os.Getenv("DEBUG") != "" || strings.ToUpper(os.Getenv("LOG_LEVEL")) == "TRACE" {
+		fmt.Printf(format, v...)
+	}
 }
 
 // Root ca for webmoney requests

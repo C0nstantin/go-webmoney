@@ -4,14 +4,6 @@ import "fmt"
 import "strings"
 import "strconv"
 
-/*func main() {
-	in := "📆 График работы центрального офиса на Новогодние праздники."
-	out := WmString(in)
-	r := WmString(out.ToWmString())
-	fmt.Println(r)
-	fmt.Println(r.FromWmString())
-}*/
-
 type WmString string
 
 func (w WmString) IsCompatibleWithWmXml() bool {
@@ -72,7 +64,7 @@ func (w WmString) ToWmString() string {
 		s = strings.ReplaceAll(s, "—", "-")
 		return s
 	}
-	fmt.Println(s)
+	DebugLog("String in WmString.ToWmString", s)
 	retval := w.Prefix()
 	for _, c := range s {
 		retval += fmt.Sprintf("%x;", c)

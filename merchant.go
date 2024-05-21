@@ -50,7 +50,7 @@ func (m *Merchant) getResult(result RetReturn) error {
 
 func (m *Merchant) parseResponse(resp RetReturn, responseStr string) error {
 	v := resp
-	fmt.Println(responseStr)
+	DebugLog("merchant response: ", responseStr)
 	r := bytes.NewReader([]byte(responseStr))
 	dec := xml.NewDecoder(r)
 	dec.CharsetReader = charset.NewReader
@@ -96,6 +96,6 @@ func (m *Merchant) sendRequest() (string, error) {
 		return "", err
 	}
 	body := "<?xml version=\"1.0\" encoding=\"utf-8\"?> \n" + string(output)
-	fmt.Println(body)
+	DebugLog(" merchant request: to " + url + "\n" + body)
 	return m.Client.sendRequest(url, body)
 }

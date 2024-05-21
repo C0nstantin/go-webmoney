@@ -27,7 +27,7 @@ type WmClient struct {
 	SecretKey string
 }
 
-// Function return true if current settings indicate
+// IsClassic function return true if current settings indicate
 // that request is signed classic key
 func (w *WmClient) IsClassic() bool {
 	if w.Key != "" && w.Pass != "" {
@@ -37,8 +37,8 @@ func (w *WmClient) IsClassic() bool {
 	}
 }
 
-// Function return true if current settings indicate
-// that reuests is signed light keeper
+// IsLight function return true if current settings indicate
+// that requests is signed light keeper
 func (w *WmClient) IsLight() bool {
 	if w.Key != "" && w.Cert != "" {
 		return true
@@ -47,7 +47,7 @@ func (w *WmClient) IsLight() bool {
 	}
 }
 
-// Function check settings for connetion and sign not set
+// noInit check settings for connetion and sign not set
 // before start use you must set Wmid, Key and Pass for Keeper Classic(WinPro)
 // or wmid, key and cert for Keepr Light(WebPro)
 func (w *WmClient) noInit() bool {
@@ -58,8 +58,7 @@ func (w *WmClient) noInit() bool {
 	}
 }
 
-// private
-// Functrion send requst to server and return response how string
+// Function send requst to server and return response how string
 func (w *WmClient) sendRequest(url string, body string) (string, error) {
 	tr, err := w.getTransport()
 	if err != nil {
