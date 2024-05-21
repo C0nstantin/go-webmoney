@@ -31,13 +31,13 @@ func Utf8ToWin(s string) (string, error) {
 }
 
 func DebugLog(v ...interface{}) {
-	if os.Getenv("DEBUG") != "" || strings.ToUpper(os.Getenv("LOG_LEVEL")) == "TRACE" {
+	if strings.ToUpper(os.Getenv("LOG_LEVEL")) == "TRACE" {
 		fmt.Println(v...)
 	}
 }
 
 func DebugLogf(format string, v ...interface{}) {
-	if os.Getenv("DEBUG") != "" || strings.ToUpper(os.Getenv("LOG_LEVEL")) == "TRACE" {
+	if strings.ToUpper(os.Getenv("LOG_LEVEL")) == "TRACE" {
 		fmt.Printf(format, v...)
 	}
 }
