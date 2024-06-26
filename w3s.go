@@ -39,6 +39,9 @@ func (w3s *W3s) getResult(result interface{}) error {
 	}
 	return nil
 }
+func (w3s *W3s) GetResult(result interface{}) error {
+	return w3s.getResult(result)
+}
 
 func (w3s *W3s) parseResponse(resp interface{}, responseStr string) error {
 	v := responseW3s{
