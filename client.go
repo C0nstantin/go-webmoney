@@ -12,8 +12,10 @@ package webmoney
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	_ "github.com/paulrosania/go-charset/data"
@@ -60,19 +62,28 @@ func (w *WmClient) noInit() bool {
 
 // Function send requst to server and return response how string
 func (w *WmClient) sendRequest(url string, body string) (string, error) {
-	tr, err := w.getTransport()
-	if err != nil {
-		return "", err
+	var client *http.Client
+	client = http.DefaultClient
+	if os.Getenv("USE_W3S_CERT") != "" {
+		tr, err := w.getTransport()
+		if err != nil {
+			return "", err
+		}
+		client.Transport = tr
 	}
-	client := &http.Client{Transport: tr}
 
 	resp, err := client.Post(url, "text/xml", strings.NewReader(body))
 	if err != nil {
 		return "", err
 	}
 
-	defer resp.Body.Close()
-	result, err := ioutil.ReadAll(resp.Body)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(resp.Body)
+	result, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	} else {
@@ -84,7 +95,7 @@ func (w *WmClient) getTransport() (*http.Transport, error) {
 	var tr *http.Transport
 	// load root ca
 	r := strings.NewReader(ROOT_CA)
-	caCert, err := ioutil.ReadAll(r)
+	caCert, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}

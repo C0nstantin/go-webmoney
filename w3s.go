@@ -51,10 +51,10 @@ func (w3s *W3s) parseResponse(resp interface{}, responseStr string) error {
 	dec := xml.NewDecoder(r)
 	dec.CharsetReader = charset.NewReader
 	err := dec.Decode(&v)
-	w3s.Result = v
 	if err != nil {
 		return fmt.Errorf("error decode xml %w", err)
 	}
+	w3s.Result = v
 	return nil
 }
 
