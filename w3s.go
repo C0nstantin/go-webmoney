@@ -1,14 +1,12 @@
 package webmoney
 
 import (
-	"bytes"
 	"encoding/xml"
 	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/C0nstantin/go-webmoney/wmsigner"
-	"github.com/paulrosania/go-charset/charset"
 	_ "github.com/paulrosania/go-charset/data"
 )
 
@@ -47,10 +45,13 @@ func (w3s *W3s) parseResponse(resp interface{}, responseStr string) error {
 	v := responseW3s{
 		Response: resp,
 	}
-	r := bytes.NewReader([]byte(responseStr))
-	dec := xml.NewDecoder(r)
-	dec.CharsetReader = charset.NewReader
-	err := dec.Decode(&v)
+	/*
+		r := bytes.NewReader([]byte(responseStr))
+		dec := xml.NewDecoder(r)
+		dec.CharsetReader = charset.NewReader
+		err := dec.Decode(&v)
+	*/
+	err := xml.Unmarshal([]byte(responseStr), &v)
 	if err != nil {
 		return fmt.Errorf("error decode xml %w", err)
 	}
