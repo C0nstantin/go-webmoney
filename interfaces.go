@@ -59,6 +59,7 @@ type responseW3s struct {
 	Ser      string      `xml:"ser"`
 	CWmid    string      `xml:"cwmid"`
 	Wmid     string      `xml:"wmid"`
+	Step     string      `xml:"step"`
 	Response interface{} `xml:",any"`
 }
 type merchantRequest struct {
