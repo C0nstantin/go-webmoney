@@ -18,15 +18,18 @@ import (
 )
 
 type TestSignRequest struct {
-	XMLName xml.Name `xml:"testsign"`
-	Wmid    string   `xml:"wmid"`
-	Plan    string   `xml:"plan"`
-	Sign    string   `xml:"sign"`
+	XMLName xml.Name   `xml:"testsign"`
+	Wmid    string     `xml:"wmid"`
+	Plan    PlanString `xml:"plan"`
+	Sign    string     `xml:"sign"`
+}
+type PlanString struct {
+	Text string `xml:",cdata"`
 }
 
 func (t TestSignRequest) GetSignSource(reqn string) (string, error) {
 
-	return t.Wmid + t.Plan + t.Sign, nil
+	return t.Wmid + t.Plan.Text + t.Sign, nil
 }
 
 type TestSignResponse struct {
