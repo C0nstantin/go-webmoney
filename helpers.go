@@ -21,6 +21,9 @@ func Reqn() string {
 	if err != nil {
 		panic(err)
 	}
+	if os.Getenv("USE_OLD_REQN") != "" {
+		return time.Now().In(loc).Format("060102150405") + nanoseconds[0:2]
+	}
 	return time.Now().In(loc).Format("20060102150405") + nanoseconds
 }
 

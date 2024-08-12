@@ -1,6 +1,8 @@
 package webmoney
 
 import (
+	"fmt"
+	"os"
 	"regexp"
 	"testing"
 	"time"
@@ -36,6 +38,32 @@ func TestReqn(t *testing.T) {
 	}
 	if reqnTime.Before(now.Add(-time.Minute)) || reqnTime.After(now.Add(time.Minute)) {
 		t.Errorf("Reqn time %s is not within a reasonable range of the current time", reqnTime)
+	}
+}
+func TestOldReqn(t *testing.T) {
+	os.Setenv("USE_OLD_REQN", "true")
+	reqn := Reqn()
+	// Check if the length of the output is as expected
+	if len(reqn) != 14 {
+		t.Errorf("Expected length of reqn to be 14, got %d", len(reqn))
+	}
+	// Check if the format of the output matches the expected pattern
+	pattern := `^\d{14}$`
+	matched, err := regexp.MatchString(pattern, reqn)
+	if err != nil {
+		t.Fatal("Regex match failed:", err)
+	}
+	if !matched {
+		t.Errorf("Reqn %s does not match the expected pattern %s", reqn, pattern)
+	}
+	loc, _ := time.LoadLocation("Europe/Moscow")
+	parse, err := time.ParseInLocation("060102150405", reqn[0:12], loc)
+	if err != nil {
+		t.Fatal("Failed to parse reqn time:", err)
+	}
+	fmt.Printf("%s\n", reqn)
+	if parse.Before(time.Now().In(loc).Add(-time.Minute)) || parse.After(time.Now().In(loc).Add(time.Minute)) {
+		t.Errorf("Reqn time %s is not within a reasonable range of the current time", parse)
 	}
 }
 
