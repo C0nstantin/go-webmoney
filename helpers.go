@@ -22,6 +22,7 @@ func Reqn() string {
 		panic(err)
 	}
 	if os.Getenv("USE_OLD_REQN") != "" {
+		loc, _ = time.LoadLocation("UTC")
 		return time.Now().In(loc).Format("060102150405") + nanoseconds[0:2]
 	}
 	return time.Now().In(loc).Format("20060102150405") + nanoseconds

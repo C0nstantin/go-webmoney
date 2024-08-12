@@ -1,7 +1,6 @@
 package webmoney
 
 import (
-	"fmt"
 	"os"
 	"regexp"
 	"testing"
@@ -32,7 +31,7 @@ func TestReqn(t *testing.T) {
 	// This is a bit more complex and might not be strictly necessary for all use cases
 	loc, err := time.LoadLocation("Europe/Moscow")
 	now := time.Now().In(loc)
-	reqnTime, err := time.ParseInLocation("20060102150405", reqn[:14], loc)
+	reqnTime, err := time.ParseInLocation("20060102150405", reqn[0:14], loc)
 	if err != nil {
 		t.Fatal("Failed to parse reqn time:", err)
 	}
@@ -56,12 +55,11 @@ func TestOldReqn(t *testing.T) {
 	if !matched {
 		t.Errorf("Reqn %s does not match the expected pattern %s", reqn, pattern)
 	}
-	loc, _ := time.LoadLocation("Europe/Moscow")
+	loc, _ := time.LoadLocation("UTC")
 	parse, err := time.ParseInLocation("060102150405", reqn[0:12], loc)
 	if err != nil {
 		t.Fatal("Failed to parse reqn time:", err)
 	}
-	fmt.Printf("%s\n", reqn)
 	if parse.Before(time.Now().In(loc).Add(-time.Minute)) || parse.After(time.Now().In(loc).Add(time.Minute)) {
 		t.Errorf("Reqn time %s is not within a reasonable range of the current time", parse)
 	}
