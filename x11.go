@@ -13,6 +13,11 @@ import (
 	"strings"
 )
 
+var (
+	ErrAttestatRecalled = errors.New("attestat recalled")
+	ErrAttestatNotFound = errors.New("attestat not found")
+)
+
 type RequestX11 struct {
 	XMLName      xml.Name `xml:"request"`
 	Wmid         string   `xml:"wmid"`
@@ -130,13 +135,13 @@ func GetInfoWmid(wmid string) (ResponseX11, error) {
 
 	if v1.CertInfo.Attestat.Recalled == "1" {
 
-		return v1, errors.New("attest is blocked")
+		return v1, ErrAttestatRecalled
 	}
 
 	if v1.CertInfo.Attestat.TID != "" {
 		return v1, nil
 	} else {
-		return v1, errors.New("attestat not found")
+		return v1, ErrAttestatNotFound
 	}
 
 }
