@@ -146,6 +146,38 @@ func GetInfoWmid(wmid string) (ResponseX11, error) {
 
 }
 
+func WMPassportByWmid(wmid string) (*ResponseX11, error) {
+	v := RequestX11{PassportWmid: wmid}
+
+	out, err := xml.MarshalIndent(v, " ", "  ")
+	if err != nil {
+		return nil, err
+	}
+	apiPassportDomain := "apipassport.web.money"
+	if v, ok := os.LookupEnv("API_PASSPORT_DOMAIN"); ok {
+		apiPassportDomain = v
+	}
+	resp, err := http.Post(fmt.Sprintf("https://%s/asp/XMLGetWMPassport.asp", apiPassportDomain), "text/xml", strings.NewReader(string(out)))
+	if err != nil {
+		return nil, err
+	}
+	body, err := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	r := bytes.NewReader(body)
+	dec := xml.NewDecoder(r)
+	dec.CharsetReader = charset.NewReader
+	v1 := &ResponseX11{}
+	err = dec.Decode(v1)
+	if err != nil {
+		return nil, err
+	}
+	return v1, nil
+
+}
+
 func (w *WmClient) GetInfoWmid(wmid string) (ResponseX11, error) {
 	return GetInfoWmid(wmid)
 }
