@@ -5,6 +5,6 @@ go 1.17
 require (
 	github.com/paulrosania/go-charset v0.0.0-20190326053356-55c9d7a5834c
 	github.com/pelletier/go-toml v1.9.5
-	golang.org/x/crypto v0.26.0
-	golang.org/x/text v0.17.0
+	golang.org/x/crypto v0.31.0
+	golang.org/x/text v0.21.0
 )
