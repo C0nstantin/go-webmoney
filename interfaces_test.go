@@ -1,7 +1,7 @@
 package webmoney_test
 
 import (
-	wm "github.com/C0nstantin/go-webmoney" // Adjust the import path as necessary
+	wm "github.com/C0nstantin/go-webmoney"
 	"os"
 	"testing"
 )
@@ -48,7 +48,11 @@ func TestXInterface_GetUrl(t *testing.T) {
 	// Execute test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.xInterface.GetUrl(tt.isClassic); got != tt.want {
+			got, err := tt.xInterface.GetUrl(tt.isClassic)
+			if err != nil {
+				t.Fatalf("XInterface.GetUrl() unexpected error: %v", err)
+			}
+			if got != tt.want {
 				t.Errorf("XInterface.GetUrl() = %v, want %v", got, tt.want)
 			}
 		})
@@ -58,4 +62,12 @@ func TestXInterface_GetUrl(t *testing.T) {
 	os.Unsetenv("MERCHANT_DOMAIN")
 	os.Unsetenv("CLASSIC_DOMAIN")
 	os.Unsetenv("LIGHT_DOMAIN")
+}
+
+func TestXInterface_GetUrl_UnknownType(t *testing.T) {
+	x := wm.XInterface{Name: "Test", Type: "invalid_type"}
+	_, err := x.GetUrl(true)
+	if err == nil {
+		t.Error("Expected error for unknown interface type, got nil")
+	}
 }

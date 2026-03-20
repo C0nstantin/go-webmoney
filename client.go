@@ -12,14 +12,21 @@ package webmoney
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	_ "github.com/paulrosania/go-charset/data"
 )
+
+// Default timeout for WebMoney API requests
+var defaultHTTPTimeout = 30 * time.Second
 
 type WmClient struct {
 	Wmid      string
@@ -27,6 +34,45 @@ type WmClient struct {
 	Pass      string
 	Cert      string
 	SecretKey string
+
+	mu         sync.Mutex
+	httpClient *http.Client
+}
+
+func maskSecret(s string) string {
+	if len(s) == 0 {
+		return ""
+	}
+	return "****"
+}
+
+// String masks sensitive fields to prevent accidental secret leakage in logs.
+func (w WmClient) String() string {
+	return fmt.Sprintf("{Wmid:%s Key:%s Pass:%s Cert:%s SecretKey:%s}",
+		w.Wmid, maskSecret(w.Key), maskSecret(w.Pass), w.Cert, maskSecret(w.SecretKey))
+}
+
+// GoString masks sensitive fields for fmt %#v formatting.
+func (w WmClient) GoString() string {
+	return fmt.Sprintf("webmoney.WmClient{Wmid:%q, Key:%q, Pass:%q, Cert:%q, SecretKey:%q}",
+		w.Wmid, maskSecret(w.Key), maskSecret(w.Pass), w.Cert, maskSecret(w.SecretKey))
+}
+
+// MarshalJSON masks sensitive fields to prevent secret leakage through JSON serialization.
+func (w WmClient) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Wmid      string `json:"Wmid"`
+		Key       string `json:"Key"`
+		Pass      string `json:"Pass"`
+		Cert      string `json:"Cert"`
+		SecretKey string `json:"SecretKey"`
+	}{
+		Wmid:      w.Wmid,
+		Key:       maskSecret(w.Key),
+		Pass:      maskSecret(w.Pass),
+		Cert:      w.Cert,
+		SecretKey: maskSecret(w.SecretKey),
+	})
 }
 
 // IsClassic function return true if current settings indicate
@@ -60,16 +106,39 @@ func (w *WmClient) noInit() bool {
 	}
 }
 
-// Function send requst to server and return response how string
-func (w *WmClient) sendRequest(url string, body string) (string, error) {
-	var client *http.Client
-	client = http.DefaultClient
+// getHTTPClient returns a thread-safe cached http.Client instance.
+// This prevents connection leaks by ensuring the transport is created only once.
+func (w *WmClient) getHTTPClient() (*http.Client, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.httpClient != nil {
+		return w.httpClient, nil
+	}
+
 	if os.Getenv("USE_W3S_CERT") != "" {
 		tr, err := w.getTransport()
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		client.Transport = tr
+		w.httpClient = &http.Client{
+			Transport: tr,
+			Timeout:   defaultHTTPTimeout,
+		}
+	} else {
+		w.httpClient = &http.Client{
+			Timeout: defaultHTTPTimeout,
+		}
+	}
+	
+	return w.httpClient, nil
+}
+
+// Function send requst to server and return response how string
+func (w *WmClient) sendRequest(url string, body string) (string, error) {
+	client, err := w.getHTTPClient()
+	if err != nil {
+		return "", err
 	}
 
 	resp, err := client.Post(url, "text/xml", strings.NewReader(body))
@@ -106,7 +175,6 @@ func (w *WmClient) getTransport() (*http.Transport, error) {
 		tr = &http.Transport{
 			TLSClientConfig: &tls.Config{
 				//RootCAs: caCertPool,
-				Renegotiation: tls.RenegotiateFreelyAsClient,
 			},
 			DisableCompression: true,
 		}
@@ -119,9 +187,8 @@ func (w *WmClient) getTransport() (*http.Transport, error) {
 		tlsConfig := &tls.Config{
 			Certificates: []tls.Certificate{cert},
 			//RootCAs:       caCertPool,
-			Renegotiation: tls.RenegotiateFreelyAsClient,
+			Renegotiation: tls.RenegotiateFreelyAsClient, // WebMoney light certificates still need this
 		}
-		tlsConfig.BuildNameToCertificate()
 
 		tr = &http.Transport{
 			TLSClientConfig:    tlsConfig,

@@ -20,6 +20,9 @@ import (
 	"regexp"
 )
 
+// wmidRegex is pre-compiled once at package init for performance.
+var wmidRegex = regexp.MustCompile(`^[0-9]{12}$`)
+
 // NewSigner return wmsigner object with wmid, pass and key
 func NewSigner(wmid string, pass string, key string) *Wmsigner {
 	return &Wmsigner{wmid, pass, key, nil}
@@ -77,8 +80,8 @@ type Wmsigner struct {
 func (w *Wmsigner) Sign(data string) (string, error) {
 
 	//check wmid
-	if matched, _ := regexp.MatchString("[0-9]{12}", w.wmid); !matched {
-		return "", errors.New("Wmid is incorrected")
+	if !wmidRegex.MatchString(w.wmid) {
+		return "", errors.New("Wmid is incorrect: must be exactly 12 digits")
 	}
 
 	//check key
@@ -96,13 +99,15 @@ func (w *Wmsigner) Sign(data string) (string, error) {
 		return "", errors.New("Password can not to be empty!")
 	}
 	powers, modules := w.initkey()
+	if powers == nil || modules == nil {
+		return "", errors.New("failed to initialize key: check wmid, password and key data")
+	}
 	hash := md4Hash([]byte(data))
 	buf := bytes.NewBuffer(hash)
 	var ini uint32
 	//add rendom 40 bytes
 	for i := 1; i <= 10; i++ {
 		binary.Read(rand.Reader, binary.LittleEndian, &ini)
-		ini = 0
 		binary.Write(buf, binary.LittleEndian, ini)
 	}
 	hash = buf.Bytes()
@@ -189,10 +194,4 @@ func (w *Wmsigner) initkey() (*big.Int, *big.Int) {
 func (w *Wmsigner) encryptKey(buff []byte) []byte {
 	hashResult := md4Hash([]byte(w.wmid + w.pass))
 	return xorWm(buff, hashResult)
-}
-
-func add_tobegin(b []byte, bb []byte) {
-	buf := bytes.NewBuffer(bb)
-	buf.Write(b)
-	b = buf.Bytes()
 }

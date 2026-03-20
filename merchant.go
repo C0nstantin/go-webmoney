@@ -64,7 +64,10 @@ func (m *Merchant) parseResponse(resp RetReturn, responseStr string) error {
 
 func (m *Merchant) sendRequest() (string, error) {
 
-	url := m.Interface.GetUrl(m.Client.IsClassic())
+	url, err := m.Interface.GetUrl(m.Client.IsClassic())
+	if err != nil {
+		return "", err
+	}
 
 	v := m.Request
 	v.setWmid(m.Client.Wmid)
@@ -79,7 +82,7 @@ func (m *Merchant) sendRequest() (string, error) {
 		str = m.Client.Wmid + str
 		sign, err := signer.Sign(str)
 		if err != nil {
-			return "", nil
+			return "", err
 		}
 		v.setSign(sign)
 	} else {

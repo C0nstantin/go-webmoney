@@ -9,23 +9,60 @@ import (
 	"fmt"
 	"golang.org/x/text/encoding/charmap"
 	"os"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
-// function return reqn params for webmoney request
-// each subsequent more as the previews
-func Reqn() string {
-	nanoseconds := fmt.Sprintf("%03.f", float32(time.Now().Nanosecond()/1000000))
-	loc, err := time.LoadLocation("Europe/Moscow")
+var sensitiveTags = []*regexp.Regexp{
+	regexp.MustCompile(`(?i)(<secret_key>)(.*?)(</secret_key>)`),
+	regexp.MustCompile(`(?i)(<pcode>)(.*?)(</pcode>)`),
+	regexp.MustCompile(`(?i)(<sign>)(.*?)(</sign>)`),
+	regexp.MustCompile(`(?i)(<md5>)(.*?)(</md5>)`),
+	regexp.MustCompile(`(?i)(<sha256>)(.*?)(</sha256>)`),
+}
+
+// MaskXMLSecrets replaces content inside sensitive XML tags with asterisks.
+func MaskXMLSecrets(xmlStr string) string {
+	result := xmlStr
+	for _, re := range sensitiveTags {
+		result = re.ReplaceAllString(result, `$1****$3`)
+	}
+	return result
+}
+
+var (
+	moscowLoc *time.Location
+	utcLoc    *time.Location
+	locOnce   sync.Once
+)
+
+func initLocations() {
+	var err error
+	moscowLoc, err = time.LoadLocation("Europe/Moscow")
 	if err != nil {
-		panic(err)
+		// Fallback for systems without tzdata: Moscow is UTC+3
+		moscowLoc = time.FixedZone("MSK", 3*60*60)
 	}
+	utcLoc, err = time.LoadLocation("UTC")
+	if err != nil {
+		utcLoc = time.UTC
+	}
+}
+
+// Reqn returns a unique transaction id (based on time) for WebMoney request
+// Each subsequent request must have a Reqn greater than the previous one
+func Reqn() string {
+	locOnce.Do(initLocations)
+	
+	now := time.Now()
+	nanoseconds := fmt.Sprintf("%03.f", float32(now.Nanosecond()/1000000))
+	
 	if os.Getenv("USE_OLD_REQN") != "" {
-		loc, _ = time.LoadLocation("UTC")
-		return time.Now().In(loc).Format("060102150405") + nanoseconds[0:2]
+		return now.In(utcLoc).Format("060102150405") + nanoseconds[0:2]
 	}
-	return time.Now().In(loc).Format("20060102150405") + nanoseconds
+	return now.In(moscowLoc).Format("20060102150405") + nanoseconds
 }
 
 // Utf8ToWin encode string from utf8 to cp1251
@@ -36,13 +73,22 @@ func Utf8ToWin(s string) (string, error) {
 
 func DebugLog(v ...interface{}) {
 	if strings.ToUpper(os.Getenv("LOG_LEVEL")) == "TRACE" {
-		fmt.Println(v...)
+		var masked []interface{}
+		for _, item := range v {
+			if str, ok := item.(string); ok {
+				masked = append(masked, MaskXMLSecrets(str))
+			} else {
+				masked = append(masked, item)
+			}
+		}
+		fmt.Println(masked...)
 	}
 }
 
 func DebugLogf(format string, v ...interface{}) {
 	if strings.ToUpper(os.Getenv("LOG_LEVEL")) == "TRACE" {
-		fmt.Printf(format, v...)
+		formatted := fmt.Sprintf(format, v...)
+		fmt.Print(MaskXMLSecrets(formatted))
 	}
 }
 
@@ -80,31 +126,6 @@ End1LRp7qm28Cic7fegUnnUpkuF4ZFq8pWq8w59sOWlRuKBuWX46OghMrjgD0AN1
 hlA2/d5ULImX70Q2te3xiS1vrQhu77mkb/jA4/9+YfeT7VMpbnC3OoHiZ2bjudKn
 thlOs+AuUvzB4Tqo62VSF5+r0sYI593S+STmaZBAzsoaoEB7qxqKbEKCvXb9BlXk
 L76xIOEkbSIdPIkGXM4aMo4mTVz7
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-MIIENjCCAx6gAwIBAgIBATANBgkqhkiG9w0BAQUFADBvMQswCQYDVQQGEwJTRTEU
-MBIGA1UEChMLQWRkVHJ1c3QgQUIxJjAkBgNVBAsTHUFkZFRydXN0IEV4dGVybmFs
-IFRUUCBOZXR3b3JrMSIwIAYDVQQDExlBZGRUcnVzdCBFeHRlcm5hbCBDQSBSb290
-MB4XDTAwMDUzMDEwNDgzOFoXDTIwMDUzMDEwNDgzOFowbzELMAkGA1UEBhMCU0Ux
-FDASBgNVBAoTC0FkZFRydXN0IEFCMSYwJAYDVQQLEx1BZGRUcnVzdCBFeHRlcm5h
-bCBUVFAgTmV0d29yazEiMCAGA1UEAxMZQWRkVHJ1c3QgRXh0ZXJuYWwgQ0EgUm9v
-dDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALf3GjPm8gAELTngTlvt
-H7xsD821+iO2zt6bETOXpClMfZOfvUq8k+0DGuOPz+VtUFrWlymUWoCwSXrbLpX9
-uMq/NzgtHj6RQa1wVsfwTz/oMp50ysiQVOnGXw94nZpAPA6sYapeFI+eh6FqUNzX
-mk6vBbOmcZSccbNQYArHE504B4YCqOmoaSYYkKtMsE8jqzpPhNjfzp/haW+710LX
-a0Tkx63ubUFfclpxCDezeWWkWaCUN/cALw3CknLa0Dhy2xSoRcRdKn23tNbE7qzN
-E0S3ySvdQwAl+mG5aWpYIxG3pzOPVnVZ9c0p10a3CitlttNCbxWyuHv77+ldU9U0
-WicCAwEAAaOB3DCB2TAdBgNVHQ4EFgQUrb2YejS0Jvf6xCZU7wO94CTLVBowCwYD
-VR0PBAQDAgEGMA8GA1UdEwEB/wQFMAMBAf8wgZkGA1UdIwSBkTCBjoAUrb2YejS0
-Jvf6xCZU7wO94CTLVBqhc6RxMG8xCzAJBgNVBAYTAlNFMRQwEgYDVQQKEwtBZGRU
-cnVzdCBBQjEmMCQGA1UECxMdQWRkVHJ1c3QgRXh0ZXJuYWwgVFRQIE5ldHdvcmsx
-IjAgBgNVBAMTGUFkZFRydXN0IEV4dGVybmFsIENBIFJvb3SCAQEwDQYJKoZIhvcN
-AQEFBQADggEBALCb4IUlwtYj4g+WBpKdQZic2YR5gdkeWxQHIzZlj7DYd7usQWxH
-YINRsPkyPef89iYTx4AWpb9a/IfPeHmJIZriTAcKhjW88t5RxNKWt9x+Tu5w/Rw5
-6wwCURQtjr0W4MHfRnXnJK3s9EK0hZNwEGe6nQY1ShjTK3rMUUKhemPR5ruhxSvC
-Nr4TDea9Y355e6cJDUCrat2PisP29owaQgVR1EX1n6diIWgVIEM8med8vSTYqZEX
-c4g/VhsxOBi0cQ+azcgOno4uG+GMmIPLHzHxREzGBHNJdmAPx/i9F4BrLunMTA5a
-mnkPIAou1Z5jJh5VkpTYghdae9C8x49OhgQ=
 -----END CERTIFICATE-----
 -----BEGIN CERTIFICATE-----
 MIICPDCCAaUCEHC65B0Q2Sk0tjjKewPMur8wDQYJKoZIhvcNAQECBQAwXzELMAkG

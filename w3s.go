@@ -86,7 +86,10 @@ func (w3s *W3s) sendRequest() (string, error) {
 	} else {
 		v.Sign = ""
 	}
-	url := w3s.Interface.GetUrl(w3s.Client.IsClassic())
+	url, err := w3s.Interface.GetUrl(w3s.Client.IsClassic())
+	if err != nil {
+		return "", fmt.Errorf("error getting URL: %w", err)
+	}
 	v.Request = w3s.Request
 	output, err := xml.MarshalIndent(v, "  ", "    ")
 	if err != nil {

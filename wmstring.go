@@ -65,33 +65,35 @@ func (w WmString) ToWmString() string {
 		return s
 	}
 	DebugLog("String in WmString.ToWmString", s)
-	retval := w.Prefix()
+	var builder strings.Builder
+	builder.WriteString(w.Prefix())
 	for _, c := range s {
-		retval += fmt.Sprintf("%x;", c)
+		fmt.Fprintf(&builder, "%x;", c)
 	}
-	return retval
+	return builder.String()
 }
 
 func (w WmString) FromWmString() string {
 
 	if !w.IsWmEncoded() {
-		s := strings.ToLower(string(w))
-		return s
+		return strings.ToLower(string(w))
 	}
 
-	elements := strings.Split(string(w), ":")
+	elements := strings.SplitN(string(w), ":", 2)
+	if len(elements) < 2 {
+		return strings.ToLower(string(w))
+	}
 	el := strings.Split(elements[1], ";")
-	retval := ""
+	var builder strings.Builder
 
 	for _, i := range el {
 		if len(i) == 0 {
 			continue
 		}
 		if s, err := strconv.ParseInt(i, 16, 64); err == nil {
-			retval += string(fmt.Sprintf("%c", s))
+			builder.WriteRune(rune(s))
 		}
 	}
 
-	return retval
-
+	return builder.String()
 }

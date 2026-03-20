@@ -98,13 +98,58 @@ type Attestat struct {
 	Notary     string `xml:"notary,attr"`
 }
 
+func getPassportDomain() string {
+	apiPassportDomain := "apipassport.web.money"
+	if v, ok := os.LookupEnv("API_PASSPORT_DOMAIN"); ok {
+		apiPassportDomain = v
+	}
+	return apiPassportDomain
+}
+
+func getPassportURL() string {
+	return fmt.Sprintf("https://%s/asp/XMLGetWMPassport.asp", getPassportDomain())
+}
+
+// postPassportRequest sends the XML request body using the given http.Client
+// and decodes the response into the provided target.
+func postPassportRequest(client *http.Client, xmlBody string, target interface{}) error {
+	resp, err := client.Post(getPassportURL(), "text/xml", strings.NewReader(xmlBody))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	r := bytes.NewReader(body)
+	dec := xml.NewDecoder(r)
+	dec.CharsetReader = charset.NewReader
+	return dec.Decode(target)
+}
+
+func checkAttestat(v1 ResponseX11) (ResponseX11, error) {
+	if v1.CertInfo.Attestat.Recalled == "1" {
+		return v1, ErrAttestatRecalled
+	}
+	if v1.CertInfo.Attestat.TID != "" {
+		return v1, nil
+	}
+	return v1, ErrAttestatNotFound
+}
+
 func IssetWmid(wmid string) (bool, error) {
-	if result, err := GetInfoWmid(wmid); result.CertInfo.Wmid == "" || err != nil {
+	result, err := GetInfoWmid(wmid)
+	if result.CertInfo.Wmid == "" || err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
+// GetInfoWmid is a standalone (package-level) function that uses http.DefaultClient.
+// Prefer WmClient.GetInfoWmid() for proper transport and timeout handling.
 func GetInfoWmid(wmid string) (ResponseX11, error) {
 	v := RequestX11{PassportWmid: wmid}
 	v1 := ResponseX11{}
@@ -112,40 +157,16 @@ func GetInfoWmid(wmid string) (ResponseX11, error) {
 	if err != nil {
 		return v1, err
 	}
-	apiPassportDomain := "apipassport.web.money"
-	if v, ok := os.LookupEnv("API_PASSPORT_DOMAIN"); ok {
-		apiPassportDomain = v
-	}
-	resp, err := http.Post(fmt.Sprintf("https://%s/asp/XMLGetWMPassport.asp", apiPassportDomain), "text/xml", strings.NewReader(string(out)))
-	if err != nil {
-		return v1, err
-	}
-	body, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	if err != nil {
-		return v1, err
-	}
-	r := bytes.NewReader(body)
-	dec := xml.NewDecoder(r)
-	dec.CharsetReader = charset.NewReader
-	err = dec.Decode(&v1)
-	if err != nil {
+
+	if err := postPassportRequest(http.DefaultClient, string(out), &v1); err != nil {
 		return ResponseX11{}, err
 	}
 
-	if v1.CertInfo.Attestat.Recalled == "1" {
-
-		return v1, ErrAttestatRecalled
-	}
-
-	if v1.CertInfo.Attestat.TID != "" {
-		return v1, nil
-	} else {
-		return v1, ErrAttestatNotFound
-	}
-
+	return checkAttestat(v1)
 }
 
+// WMPassportByWmid is a standalone (package-level) function that uses http.DefaultClient.
+// Prefer WmClient.WMPassportByWmid() for proper transport and timeout handling.
 func WMPassportByWmid(wmid string) (*ResponseX11, error) {
 	v := RequestX11{PassportWmid: wmid}
 
@@ -153,35 +174,39 @@ func WMPassportByWmid(wmid string) (*ResponseX11, error) {
 	if err != nil {
 		return nil, err
 	}
-	apiPassportDomain := "apipassport.web.money"
-	if v, ok := os.LookupEnv("API_PASSPORT_DOMAIN"); ok {
-		apiPassportDomain = v
-	}
-	resp, err := http.Post(fmt.Sprintf("https://%s/asp/XMLGetWMPassport.asp", apiPassportDomain), "text/xml", strings.NewReader(string(out)))
-	if err != nil {
-		return nil, err
-	}
-	body, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	r := bytes.NewReader(body)
-	dec := xml.NewDecoder(r)
-	dec.CharsetReader = charset.NewReader
+
 	v1 := &ResponseX11{}
-	err = dec.Decode(v1)
-	if err != nil {
+	if err := postPassportRequest(http.DefaultClient, string(out), v1); err != nil {
 		return nil, err
 	}
 	return v1, nil
-
 }
 
+// GetInfoWmid uses the WmClient's cached HTTP client with proper TLS and timeout settings.
 func (w *WmClient) GetInfoWmid(wmid string) (ResponseX11, error) {
-	return GetInfoWmid(wmid)
+	client, err := w.getHTTPClient()
+	if err != nil {
+		return ResponseX11{}, err
+	}
+
+	v := RequestX11{PassportWmid: wmid}
+	v1 := ResponseX11{}
+	out, err := xml.MarshalIndent(v, " ", "  ")
+	if err != nil {
+		return v1, err
+	}
+
+	if err := postPassportRequest(client, string(out), &v1); err != nil {
+		return ResponseX11{}, err
+	}
+
+	return checkAttestat(v1)
 }
 
 func (w *WmClient) IssetWmid(wmid string) (bool, error) {
-	return IssetWmid(wmid)
+	result, err := w.GetInfoWmid(wmid)
+	if result.CertInfo.Wmid == "" || err != nil {
+		return false, err
+	}
+	return true, nil
 }

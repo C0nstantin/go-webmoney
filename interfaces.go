@@ -11,7 +11,7 @@ type XInterface struct {
 	Type string
 }
 
-func (x *XInterface) GetUrl(isClassic bool) string {
+func (x *XInterface) GetUrl(isClassic bool) (string, error) {
 	merchantDomain := "merchant.web.money"
 	classicDomain := "w10s.web.money"
 	lightDomain := "w10s.web.money"
@@ -27,19 +27,19 @@ func (x *XInterface) GetUrl(isClassic bool) string {
 
 	if x.Type == "w3s" || x.Type == "passport" {
 		if isClassic {
-			return fmt.Sprintf("https://%s/asp/XML%s.asp", classicDomain, x.Name)
+			return fmt.Sprintf("https://%s/asp/XML%s.asp", classicDomain, x.Name), nil
 		} else {
 			if x.Name == "FindWMPurseNew" {
-				return fmt.Sprintf("https://%s/asp/XMLFindWMPurseNew.asp", lightDomain)
+				return fmt.Sprintf("https://%s/asp/XMLFindWMPurseNew.asp", lightDomain), nil
 
 			} else {
-				return fmt.Sprintf("https://%s/asp/XML%sCert.asp", lightDomain, x.Name)
+				return fmt.Sprintf("https://%s/asp/XML%sCert.asp", lightDomain, x.Name), nil
 			}
 		}
 	} else if x.Type == "merchant" {
-		return fmt.Sprintf("https://%s/conf/xml/XML%s.asp", merchantDomain, x.Name)
+		return fmt.Sprintf("https://%s/conf/xml/XML%s.asp", merchantDomain, x.Name), nil
 	}
-	panic("unknown interface type " + x.Type)
+	return "", fmt.Errorf("unknown interface type: %q", x.Type)
 }
 
 type requestW3s struct {

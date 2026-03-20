@@ -77,6 +77,6 @@ func (w *WmClient) FindWmidPurse(t TestWmPurse) (TestWmPurseResponse, error) {
 		Client:    w,
 	}
 	result := TestWmPurseResponse{}
-	X.getResult(&result)
-	return result, nil
+	err := X.getResult(&result)
+	return result, err
 }

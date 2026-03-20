@@ -3,3 +3,5 @@
 *.toml
 .idea
 *conf
+internal_docs/
+.DS_Store

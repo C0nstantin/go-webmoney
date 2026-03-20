@@ -32,7 +32,7 @@ func (t Transaction) GetSignSource(reqn string) (string, error) {
 		t.Period = "0"
 	}
 	desc, err := Utf8ToWin(t.Desc)
-	if desc != "" && err != nil {
+	if err != nil {
 		return "", err
 	}
 
