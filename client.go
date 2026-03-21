@@ -47,19 +47,20 @@ func maskSecret(s string) string {
 }
 
 // String masks sensitive fields to prevent accidental secret leakage in logs.
-func (w WmClient) String() string {
+func (w *WmClient) String() string {
 	return fmt.Sprintf("{Wmid:%s Key:%s Pass:%s Cert:%s SecretKey:%s}",
 		w.Wmid, maskSecret(w.Key), maskSecret(w.Pass), w.Cert, maskSecret(w.SecretKey))
 }
 
 // GoString masks sensitive fields for fmt %#v formatting.
-func (w WmClient) GoString() string {
+func (w *WmClient) GoString() string {
 	return fmt.Sprintf("webmoney.WmClient{Wmid:%q, Key:%q, Pass:%q, Cert:%q, SecretKey:%q}",
 		w.Wmid, maskSecret(w.Key), maskSecret(w.Pass), w.Cert, maskSecret(w.SecretKey))
 }
 
 // MarshalJSON masks sensitive fields to prevent secret leakage through JSON serialization.
-func (w WmClient) MarshalJSON() ([]byte, error) {
+// Use RawJSON() when you need actual values (e.g., config persistence).
+func (w *WmClient) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Wmid      string `json:"Wmid"`
 		Key       string `json:"Key"`
@@ -72,6 +73,24 @@ func (w WmClient) MarshalJSON() ([]byte, error) {
 		Pass:      maskSecret(w.Pass),
 		Cert:      w.Cert,
 		SecretKey: maskSecret(w.SecretKey),
+	})
+}
+
+// RawJSON returns JSON with actual (unmasked) field values.
+// Use this only when you explicitly need to serialize credentials (e.g., config storage).
+func (w *WmClient) RawJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Wmid      string `json:"Wmid"`
+		Key       string `json:"Key"`
+		Pass      string `json:"Pass"`
+		Cert      string `json:"Cert"`
+		SecretKey string `json:"SecretKey"`
+	}{
+		Wmid:      w.Wmid,
+		Key:       w.Key,
+		Pass:      w.Pass,
+		Cert:      w.Cert,
+		SecretKey: w.SecretKey,
 	})
 }
 
@@ -152,7 +171,7 @@ func (w *WmClient) sendRequest(url string, body string) (string, error) {
 			log.Println(err)
 		}
 	}(resp.Body)
-	result, err := io.ReadAll(resp.Body)
+	result, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize))
 	if err != nil {
 		return "", err
 	} else {

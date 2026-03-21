@@ -100,7 +100,7 @@ type Attestat struct {
 
 func getPassportDomain() string {
 	apiPassportDomain := "apipassport.web.money"
-	if v, ok := os.LookupEnv("API_PASSPORT_DOMAIN"); ok {
+	if v, ok := os.LookupEnv("API_PASSPORT_DOMAIN"); ok && isValidDomain(v) {
 		apiPassportDomain = v
 	}
 	return apiPassportDomain
@@ -119,7 +119,7 @@ func postPassportRequest(client *http.Client, xmlBody string, target interface{}
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize))
 	if err != nil {
 		return err
 	}

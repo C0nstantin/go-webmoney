@@ -15,13 +15,13 @@ func (x *XInterface) GetUrl(isClassic bool) (string, error) {
 	merchantDomain := "merchant.web.money"
 	classicDomain := "w10s.web.money"
 	lightDomain := "w10s.web.money"
-	if v, ok := os.LookupEnv("MERCHANT_DOMAIN"); ok {
+	if v, ok := os.LookupEnv("MERCHANT_DOMAIN"); ok && isValidDomain(v) {
 		merchantDomain = v
 	}
-	if v, ok := os.LookupEnv("CLASSIC_DOMAIN"); ok {
+	if v, ok := os.LookupEnv("CLASSIC_DOMAIN"); ok && isValidDomain(v) {
 		classicDomain = v
 	}
-	if v, ok := os.LookupEnv("LIGHT_DOMAIN"); ok {
+	if v, ok := os.LookupEnv("LIGHT_DOMAIN"); ok && isValidDomain(v) {
 		lightDomain = v
 	}
 

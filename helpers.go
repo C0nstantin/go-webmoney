@@ -15,6 +15,22 @@ import (
 	"time"
 )
 
+// maxResponseSize limits the maximum WebMoney API response size to 10 MB.
+// This prevents memory exhaustion from a malicious or misconfigured server.
+const maxResponseSize = 10 * 1024 * 1024
+
+// validDomainRegex matches valid domain names (letters, digits, hyphens, dots).
+var validDomainRegex = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?)+$`)
+
+// isValidDomain checks that a string looks like a valid domain name.
+// Rejects paths, query strings, ports, and other URL components.
+func isValidDomain(domain string) bool {
+	if len(domain) == 0 || len(domain) > 253 {
+		return false
+	}
+	return validDomainRegex.MatchString(domain)
+}
+
 var sensitiveTags = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)(<secret_key>)(.*?)(</secret_key>)`),
 	regexp.MustCompile(`(?i)(<pcode>)(.*?)(</pcode>)`),
