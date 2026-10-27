@@ -376,8 +376,44 @@ type OutInvoicesResp struct {
 ## x11 Retrieving information from client’s passport by WM-identifier
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X11)
 ```go
+	// Three outcomes: exists / not found / unknown (passport gave no trustworthy answer).
+	status, err := webmoney.CheckWmid(`128756507061`)
+	switch {
+	case err != nil:
+		// webmoney.ErrPassportUnavailable (timeout, HTTP error, broken XML, no retval)
+		// or webmoney.ErrPassportRetval (retval != 0). Do NOT treat as "not found".
+	case status == webmoney.WmidExists:
+	case status == webmoney.WmidNotFound: // deleted from WebMoney, never existed or malformed (retval="2")
+	}
+
+	// IssetWmid is CheckWmid folded into a bool: (true, nil) / (false, nil) / (false, err).
+	// Before v1.10.0 it reported true for ANY WMID (certinfo wmid is an echo of the request).
+	ok, err := webmoney.IssetWmid(`128756507061`)
+
+	// Passport info with attestat check:
+	// ErrAttestatRecalled / ErrAttestatNotFound / ErrPassportUnavailable / ErrPassportRetval.
 	result, err := webmoney.GetInfoWmid(`128756507061`)
+
+	// Raw response (retval != 0 is returned as is, inspect result.Retval / result.Retdesc):
+	raw, err := webmoney.WMPassportByWmid(`128756507061`)
+
+	// The same methods exist on WmClient and use its cached HTTP client:
+	status, err = wmCl.CheckWmid(`128756507061`)
  ```
+Package-level functions use a dedicated HTTP client with a 30s timeout that does
+not follow redirects. Override the timeout with `API_PASSPORT_TIMEOUT` (Go duration,
+e.g. `15s`, read once when the client is first created), `webmoney.SetPassportTimeout(d)`
+or install your own client with `webmoney.SetPassportHTTPClient(c)`. The `WmClient`
+methods use the client's own cached HTTP client (30s timeout, `USE_W3S_CERT` transport)
+and are not affected by these settings.
+
+The response is accepted only when it is HTTP 200, well-formed XML with a numeric
+`retval` attribute and, for `retval="0"`, a `<certinfo>` for the requested WMID.
+Note that `certinfo wmid` merely echoes the request: a deleted and a made-up WMID
+produce the same empty `<certinfo>`. A WMID is considered existing only when the
+passport returns an `<attestat>` row (tid or datecrt) or a `<wmids>` entry.
+`ErrPassportUnavailable` wraps the underlying transport error, so
+`errors.As(err, &netErr)` / `netErr.Timeout()` still work.
 
 ## x13 Recalling incomplete protected transaction
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X13)
@@ -497,6 +533,7 @@ os.Setenv("MERCHANT_DOMAIN", "merchant.web.money") //merchant.web.money is a def
 os.Setenv("CLASSIC_DOMAIN", "w3s.webmoney.com") // w10s.web.money is a default value
 //if you use light (webpro) auth
 os.Setenv("LIGHT_DOMAIN", "w3s.webmoney.com") // w10s.web.money is a default value
-// for passport request 
-os.Setenv("API_PASSPORT_DOMAIN", "apipassort.web.money")
+// for passport request
+os.Setenv("API_PASSPORT_DOMAIN", "apipassport.web.money")
+os.Setenv("API_PASSPORT_TIMEOUT", "30s")
 ```
