@@ -5,8 +5,34 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
+
+func TestFetchPassportResponseBoundaries(t *testing.T) {
+	const valid = `<response retval="0"><certinfo wmid="123456789012"/></response>`
+	for _, tt := range []struct {
+		name, body string
+		limit      int64
+		wantErr    bool
+	}{
+		{"exact limit", valid, int64(len(valid)), false},
+		{"valid prefix oversized", valid + strings.Repeat(" ", 100), int64(len(valid)), true},
+		{"second root", valid + `<response retval="2"/>`, 1024, true},
+		{"trailing text", valid + `garbage`, 1024, true},
+		{"broken trailing comment", valid + `<!--`, 1024, true},
+		{"legal trailing markup", valid + ` <!--ok--><?test ok?> `, 1024, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(tt.body)) }))
+			defer srv.Close()
+			_, err := FetchPassport(context.Background(), "123456789012", PassportRequestOptions{HTTPClient: srv.Client(), EndpointURL: srv.URL, MaxResponseBytes: tt.limit})
+			if tt.wantErr != errors.Is(err, ErrPassportUnavailable) {
+				t.Fatalf("error = %v, want unavailable %v", err, tt.wantErr)
+			}
+		})
+	}
+}
 
 func TestFetchPassportCancellation(t *testing.T) {
 	started := make(chan struct{})

@@ -269,15 +269,30 @@ type passportEnvelope struct {
 func decodePassportXML(body []byte, target interface{}) error {
 	dec := xml.NewDecoder(bytes.NewReader(body))
 	dec.CharsetReader = charset.NewReader
-	return dec.Decode(target)
+	if err := dec.Decode(target); err != nil {
+		return err
+	}
+	for {
+		tok, err := dec.Token()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		switch v := tok.(type) {
+		case xml.CharData:
+			if strings.TrimSpace(string(v)) != "" {
+				return errors.New("unexpected text after response")
+			}
+		case xml.Comment, xml.ProcInst:
+			// XML permits comments and processing instructions after the root.
+		default:
+			return errors.New("unexpected XML after response")
+		}
+	}
 }
 
-// postPassportRequest sends an X11 request for wmid and decodes the response
-// into target only if the response is trustworthy: HTTP 200, well-formed XML
-// with a numeric retval attribute and, for retval="0", a <certinfo> whose
-// wmid attribute echoes the requested WMID. Anything else is
-// ErrPassportUnavailable. A response with retval != 0 is decoded and returned
-// without error — the caller decides what it means.
 // PassportRequestOptions overrides the transport, endpoint or response limit for
 // one FetchPassport call. Zero values use the package defaults (1 MiB limit).
 // Redirect policy on a supplied HTTPClient is the caller's responsibility.
@@ -309,6 +324,12 @@ func FetchPassport(ctx context.Context, wmid string, opts PassportRequestOptions
 	return v, nil
 }
 
+// postPassportRequest sends an X11 request for wmid and decodes the response
+// into target only if the response is trustworthy: HTTP 200, well-formed XML
+// with a numeric retval attribute and, for retval="0", a <certinfo> whose
+// wmid attribute echoes the requested WMID. Anything else is
+// ErrPassportUnavailable. A response with retval != 0 is decoded and returned
+// without error — the caller decides what it means.
 func postPassportRequest(ctx context.Context, opts PassportRequestOptions, wmid string, target *ResponseX11) error {
 	out, err := xml.MarshalIndent(RequestX11{PassportWmid: wmid, Mode: "0"}, " ", "  ")
 	if err != nil {
@@ -326,9 +347,12 @@ func postPassportRequest(ctx context.Context, opts PassportRequestOptions, wmid 
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, opts.MaxResponseBytes))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, opts.MaxResponseBytes+1))
 	if err != nil {
 		return unavailable("reading body", err)
+	}
+	if int64(len(body)) > opts.MaxResponseBytes {
+		return unavailable("response exceeds size limit", nil)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return unavailable(fmt.Sprintf("HTTP %d", resp.StatusCode), nil)

@@ -428,7 +428,9 @@ raw, err := webmoney.FetchPassport(ctx, wmid, webmoney.PassportRequestOptions{
 ```
 
 Zero options use the package client, standard X11 endpoint and a 1 MiB body limit.
-A supplied client's redirect policy is preserved. `FetchPassport` returns raw retval and recalled attestats without
+A supplied client's redirect policy is preserved. Responses exceeding the limit,
+including whitespace after valid XML, and extra XML roots or trailing text are
+rejected. `FetchPassport` returns raw retval and recalled attestats without
 interpreting them. `CertInfo.CheckLock` exposes the `userinfo/check-lock/row`
 attributes alongside `CertInfo.UserInfo`; `ResponseX11.FullAccess` exposes the raw
 `fullaccess` value. These fields do not apply privacy filtering for the caller.
