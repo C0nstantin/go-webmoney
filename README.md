@@ -415,6 +415,24 @@ passport returns an `<attestat>` row (tid or datecrt) or a `<wmids>` entry.
 `ErrPassportUnavailable` wraps the underlying transport error, so
 `errors.As(err, &netErr)` / `netErr.Timeout()` still work.
 
+The X11 functions and `WmClient` methods also have `Context` variants, for example
+`CheckWmidContext(ctx, wmid)` and `WMPassportByWmidContext(ctx, wmid)`. Existing
+functions use `context.Background()` and retain their result/error semantics.
+For a per-call HTTP client, endpoint or response limit, use:
+
+```go
+raw, err := webmoney.FetchPassport(ctx, wmid, webmoney.PassportRequestOptions{
+    HTTPClient: client,
+    MaxResponseBytes: 256 << 10,
+})
+```
+
+Zero options use the package client, standard X11 endpoint and a 1 MiB body limit.
+A supplied client's redirect policy is preserved. `FetchPassport` returns raw retval and recalled attestats without
+interpreting them. `CertInfo.CheckLock` exposes the `userinfo/check-lock/row`
+attributes alongside `CertInfo.UserInfo`; `ResponseX11.FullAccess` exposes the raw
+`fullaccess` value. These fields do not apply privacy filtering for the caller.
+
 ## x13 Recalling incomplete protected transaction
 [Detail Information](http://wiki.wmtransfer.com/projects/webmoney/wiki/Interface_X13)
 ```go

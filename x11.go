@@ -2,6 +2,7 @@ package webmoney
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -99,17 +100,19 @@ type ResponseX11 struct {
 	// Retval is guaranteed to come from an explicit retval attribute when the
 	// struct was filled by this package: responses without it are rejected
 	// with ErrPassportUnavailable before decoding.
-	Retval   int      `xml:"retval,attr"`
-	Retdesc  string   `xml:"retdesc,attr"`
-	CertInfo CertInfo `xml:"certinfo"`
+	Retval     int      `xml:"retval,attr"`
+	Retdesc    string   `xml:"retdesc,attr"`
+	CertInfo   CertInfo `xml:"certinfo"`
+	FullAccess string   `xml:"fullaccess"`
 }
 
 type CertInfo struct {
-	XMLName  xml.Name `xml:"certinfo"`
-	Attestat Attestat `xml:"attestat>row"`
-	Wmid     string   `xml:"wmid,attr"`
-	Wmids    []WmidP  `xml:"wmids>row"`
-	UserInfo UserInfo `xml:"userinfo>value>row"`
+	XMLName   xml.Name `xml:"certinfo"`
+	Attestat  Attestat `xml:"attestat>row"`
+	Wmid      string   `xml:"wmid,attr"`
+	Wmids     []WmidP  `xml:"wmids>row"`
+	UserInfo  UserInfo `xml:"userinfo>value>row"`
+	CheckLock UserInfo `xml:"userinfo>check-lock>row"`
 }
 
 type WmidP struct {
@@ -275,19 +278,55 @@ func decodePassportXML(body []byte, target interface{}) error {
 // wmid attribute echoes the requested WMID. Anything else is
 // ErrPassportUnavailable. A response with retval != 0 is decoded and returned
 // without error — the caller decides what it means.
-func postPassportRequest(client *http.Client, wmid string, target *ResponseX11) error {
-	out, err := xml.MarshalIndent(RequestX11{PassportWmid: wmid}, " ", "  ")
+// PassportRequestOptions overrides the transport, endpoint or response limit for
+// one FetchPassport call. Zero values use the package defaults (1 MiB limit).
+// Redirect policy on a supplied HTTPClient is the caller's responsibility.
+type PassportRequestOptions struct {
+	HTTPClient       *http.Client
+	EndpointURL      string
+	MaxResponseBytes int64
+}
+
+// FetchPassport returns the raw X11 response without interpreting attestat or
+// retval. Transport and malformed responses wrap ErrPassportUnavailable.
+func FetchPassport(ctx context.Context, wmid string, opts PassportRequestOptions) (*ResponseX11, error) {
+	if opts.HTTPClient == nil {
+		opts.HTTPClient = getPassportClient()
+	}
+	if opts.EndpointURL == "" {
+		opts.EndpointURL = getPassportURL()
+	}
+	if opts.MaxResponseBytes == 0 {
+		opts.MaxResponseBytes = maxPassportResponseSize
+	}
+	if opts.MaxResponseBytes < 0 || opts.MaxResponseBytes == int64(^uint64(0)>>1) {
+		return nil, unavailable("invalid response limit", nil)
+	}
+	v := &ResponseX11{}
+	if err := postPassportRequest(ctx, opts, wmid, v); err != nil {
+		return nil, err
+	}
+	return v, nil
+}
+
+func postPassportRequest(ctx context.Context, opts PassportRequestOptions, wmid string, target *ResponseX11) error {
+	out, err := xml.MarshalIndent(RequestX11{PassportWmid: wmid, Mode: "0"}, " ", "  ")
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Post(getPassportURL(), "text/xml", bytes.NewReader(out))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, opts.EndpointURL, bytes.NewReader(out))
+	if err != nil {
+		return unavailable("creating request", err)
+	}
+	req.Header.Set("Content-Type", "text/xml")
+	resp, err := opts.HTTPClient.Do(req)
 	if err != nil {
 		return unavailable("request failed", err)
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, maxPassportResponseSize))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, opts.MaxResponseBytes))
 	if err != nil {
 		return unavailable("reading body", err)
 	}
@@ -357,9 +396,9 @@ func classifyWmid(v ResponseX11) WmidStatus {
 	return WmidNotFound
 }
 
-func checkWmid(client *http.Client, wmid string) (WmidStatus, error) {
+func checkWmid(ctx context.Context, client *http.Client, wmid string) (WmidStatus, error) {
 	var v ResponseX11
-	if err := postPassportRequest(client, wmid, &v); err != nil {
+	if err := postPassportRequest(ctx, PassportRequestOptions{HTTPClient: client, EndpointURL: getPassportURL(), MaxResponseBytes: maxPassportResponseSize}, wmid, &v); err != nil {
 		return WmidUnknown, err
 	}
 	switch v.Retval {
@@ -372,9 +411,9 @@ func checkWmid(client *http.Client, wmid string) (WmidStatus, error) {
 	}
 }
 
-func getInfoWmid(client *http.Client, wmid string) (ResponseX11, error) {
+func getInfoWmid(ctx context.Context, client *http.Client, wmid string) (ResponseX11, error) {
 	var v ResponseX11
-	if err := postPassportRequest(client, wmid, &v); err != nil {
+	if err := postPassportRequest(ctx, PassportRequestOptions{HTTPClient: client, EndpointURL: getPassportURL(), MaxResponseBytes: maxPassportResponseSize}, wmid, &v); err != nil {
 		return ResponseX11{}, err
 	}
 	switch v.Retval {
@@ -389,12 +428,8 @@ func getInfoWmid(client *http.Client, wmid string) (ResponseX11, error) {
 	}
 }
 
-func wmPassportByWmid(client *http.Client, wmid string) (*ResponseX11, error) {
-	v := &ResponseX11{}
-	if err := postPassportRequest(client, wmid, v); err != nil {
-		return nil, err
-	}
-	return v, nil
+func wmPassportByWmid(ctx context.Context, client *http.Client, wmid string) (*ResponseX11, error) {
+	return FetchPassport(ctx, wmid, PassportRequestOptions{HTTPClient: client})
 }
 
 func checkAttestat(v1 ResponseX11) (ResponseX11, error) {
@@ -418,7 +453,12 @@ func checkAttestat(v1 ResponseX11) (ResponseX11, error) {
 //
 // Uses a package-level client with a timeout (see SetPassportTimeout).
 func CheckWmid(wmid string) (WmidStatus, error) {
-	return checkWmid(getPassportClient(), wmid)
+	return CheckWmidContext(context.Background(), wmid)
+}
+
+// CheckWmidContext is CheckWmid with request cancellation.
+func CheckWmidContext(ctx context.Context, wmid string) (WmidStatus, error) {
+	return checkWmid(ctx, getPassportClient(), wmid)
 }
 
 // IssetWmid reports whether a WMID exists. It is CheckWmid folded into a bool:
@@ -426,7 +466,12 @@ func CheckWmid(wmid string) (WmidStatus, error) {
 // when the passport gave no trustworthy answer. Callers that ignore the error
 // will treat a passport outage as "WMID does not exist" — prefer CheckWmid.
 func IssetWmid(wmid string) (bool, error) {
-	st, err := CheckWmid(wmid)
+	return IssetWmidContext(context.Background(), wmid)
+}
+
+// IssetWmidContext is IssetWmid with request cancellation.
+func IssetWmidContext(ctx context.Context, wmid string) (bool, error) {
+	st, err := CheckWmidContext(ctx, wmid)
 	return st == WmidExists, err
 }
 
@@ -440,7 +485,12 @@ func IssetWmid(wmid string) (bool, error) {
 // Uses a package-level client with a timeout (see SetPassportTimeout).
 // Prefer WmClient.GetInfoWmid() when a WmClient is at hand.
 func GetInfoWmid(wmid string) (ResponseX11, error) {
-	return getInfoWmid(getPassportClient(), wmid)
+	return GetInfoWmidContext(context.Background(), wmid)
+}
+
+// GetInfoWmidContext is GetInfoWmid with request cancellation.
+func GetInfoWmidContext(ctx context.Context, wmid string) (ResponseX11, error) {
+	return getInfoWmid(ctx, getPassportClient(), wmid)
 }
 
 // WMPassportByWmid returns the raw passport response. The transport is strict
@@ -450,39 +500,64 @@ func GetInfoWmid(wmid string) (ResponseX11, error) {
 //
 // Uses a package-level client with a timeout (see SetPassportTimeout).
 func WMPassportByWmid(wmid string) (*ResponseX11, error) {
-	return wmPassportByWmid(getPassportClient(), wmid)
+	return WMPassportByWmidContext(context.Background(), wmid)
+}
+
+// WMPassportByWmidContext is WMPassportByWmid with request cancellation.
+func WMPassportByWmidContext(ctx context.Context, wmid string) (*ResponseX11, error) {
+	return wmPassportByWmid(ctx, getPassportClient(), wmid)
 }
 
 // CheckWmid is CheckWmid using the WmClient's cached HTTP client.
 func (w *WmClient) CheckWmid(wmid string) (WmidStatus, error) {
+	return w.CheckWmidContext(context.Background(), wmid)
+}
+
+// CheckWmidContext is CheckWmid with request cancellation.
+func (w *WmClient) CheckWmidContext(ctx context.Context, wmid string) (WmidStatus, error) {
 	client, err := w.getHTTPClient()
 	if err != nil {
 		return WmidUnknown, err
 	}
-	return checkWmid(client, wmid)
+	return checkWmid(ctx, client, wmid)
 }
 
 // IssetWmid is IssetWmid using the WmClient's cached HTTP client.
 func (w *WmClient) IssetWmid(wmid string) (bool, error) {
-	st, err := w.CheckWmid(wmid)
+	return w.IssetWmidContext(context.Background(), wmid)
+}
+
+// IssetWmidContext is IssetWmid with request cancellation.
+func (w *WmClient) IssetWmidContext(ctx context.Context, wmid string) (bool, error) {
+	st, err := w.CheckWmidContext(ctx, wmid)
 	return st == WmidExists, err
 }
 
 // GetInfoWmid is GetInfoWmid using the WmClient's cached HTTP client with
 // proper TLS and timeout settings.
 func (w *WmClient) GetInfoWmid(wmid string) (ResponseX11, error) {
+	return w.GetInfoWmidContext(context.Background(), wmid)
+}
+
+// GetInfoWmidContext is GetInfoWmid with request cancellation.
+func (w *WmClient) GetInfoWmidContext(ctx context.Context, wmid string) (ResponseX11, error) {
 	client, err := w.getHTTPClient()
 	if err != nil {
 		return ResponseX11{}, err
 	}
-	return getInfoWmid(client, wmid)
+	return getInfoWmid(ctx, client, wmid)
 }
 
 // WMPassportByWmid is WMPassportByWmid using the WmClient's cached HTTP client.
 func (w *WmClient) WMPassportByWmid(wmid string) (*ResponseX11, error) {
+	return w.WMPassportByWmidContext(context.Background(), wmid)
+}
+
+// WMPassportByWmidContext is WMPassportByWmid with request cancellation.
+func (w *WmClient) WMPassportByWmidContext(ctx context.Context, wmid string) (*ResponseX11, error) {
 	client, err := w.getHTTPClient()
 	if err != nil {
 		return nil, err
 	}
-	return wmPassportByWmid(client, wmid)
+	return wmPassportByWmid(ctx, client, wmid)
 }
