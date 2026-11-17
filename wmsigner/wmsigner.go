@@ -110,7 +110,9 @@ func (w *Wmsigner) Sign(data string) (string, error) {
 	var ini uint32
 	//add rendom 40 bytes
 	for i := 1; i <= 10; i++ {
-		binary.Read(rand.Reader, binary.LittleEndian, &ini)
+		if err := binary.Read(rand.Reader, binary.LittleEndian, &ini); err != nil {
+			return "", fmt.Errorf("crypto/rand failed: %w", err)
+		}
 		binary.Write(buf, binary.LittleEndian, ini)
 	}
 	hash = buf.Bytes()
@@ -129,14 +131,21 @@ func (w *Wmsigner) Sign(data string) (string, error) {
 	i.SetBytes(data_res)
 	signature := i.Exp(i, powers, modules)
 
+	modlen := len(modules.Bytes())
 	sig := bytes.NewBuffer([]byte{})
-	for i := len(signature.Bytes()); i <= len(modules.Bytes()); i++ {
-		sig.Write([]byte{0})
+	for i := len(signature.Bytes()); i < modlen; i++ {
+		sig.WriteByte(0)
 	}
 	sig.Write(signature.Bytes())
 	sigbyte := reversebyte(sig.Bytes())
+	if len(sigbyte)%2 != 0 {
+		// Odd modulus length: pad the most significant byte so the
+		// uint16 packing below does not silently drop it. Real WM keys
+		// have even-length moduli; their output is unchanged.
+		sigbyte = append(sigbyte, 0)
+	}
 	sig = bytes.NewBuffer(sigbyte)
-	var s = make([]uint16, len(sig.Bytes())/2)
+	var s = make([]uint16, len(sigbyte)/2)
 	err = binary.Read(sig, binary.LittleEndian, s)
 	if err != nil {
 		return "", err
