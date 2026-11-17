@@ -160,6 +160,24 @@ func (w *Wmsigner) Sign(data string) (string, error) {
 }
 
 func (w *Wmsigner) initkey() (*big.Int, *big.Int, error) {
+	// Совместимость с WM Keeper Classic: ключи, созданные старыми версиями
+	// Keeper, зашифрованы первой половиной пароля. Официальный WMSigner
+	// (Signer::SecureKeyByIDPWHalf) и эталонный PHP-signer пробуют полный
+	// пароль и его первую половину. Сам пароль никогда не мутирует.
+	powers, modules, err := w.initkeyWithPass(w.pass)
+	if err == nil {
+		return powers, modules, nil
+	}
+	if half := len(w.pass) / 2; half < len(w.pass) {
+		if p2, m2, err2 := w.initkeyWithPass(w.pass[:half]); err2 == nil {
+			return p2, m2, nil
+		}
+	}
+	// Обе попытки не прошли — возвращаем ошибку полного пароля.
+	return nil, nil, err
+}
+
+func (w *Wmsigner) initkeyWithPass(pass string) (*big.Int, *big.Int, error) {
 	data, err := base64.StdEncoding.DecodeString(w.key)
 	if err != nil {
 		return nil, nil, err
@@ -168,7 +186,7 @@ func (w *Wmsigner) initkey() (*big.Int, *big.Int, error) {
 	r := bytes.NewBuffer(data)
 	header := r.Next(30)
 	body := r.Bytes()
-	body = w.encryptKey(body)
+	body = w.encryptKey(body, pass)
 	r = bytes.NewBuffer([]byte{})
 
 	r.Write(header)
@@ -189,8 +207,8 @@ func (w *Wmsigner) initkey() (*big.Int, *big.Int, error) {
 
 	calculated_crc := md4Hash(r.Bytes())
 	if !bytes.Equal(crc, calculated_crc) {
-		// Do NOT mutate the password or retry with a truncated one:
-		// a CRC mismatch means a wrong password or corrupted key data.
+		// Несовпадение CRC для данной попытки пароля. Решение о повторе
+		// с половиной пароля принимает initkey; состояние не мутирует.
 		return nil, nil, errors.New("key CRC mismatch: wrong password or corrupted key data")
 	}
 	r = bytes.NewBuffer(body)
@@ -209,7 +227,7 @@ func (w *Wmsigner) initkey() (*big.Int, *big.Int, error) {
 	return powers, modules, nil
 }
 
-func (w *Wmsigner) encryptKey(buff []byte) []byte {
-	hashResult := md4Hash([]byte(w.wmid + w.pass))
+func (w *Wmsigner) encryptKey(buff []byte, pass string) []byte {
+	hashResult := md4Hash([]byte(w.wmid + pass))
 	return xorWm(buff, hashResult)
 }

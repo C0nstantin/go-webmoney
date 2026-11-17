@@ -54,8 +54,9 @@ func buildTestKey(wmid, pass string, powers, modules *big.Int) string {
 }
 
 // Регрессия SEC-11: при несовпадении CRC signer молча усекал пароль вдвое
-// и рекурсивно повторял, портя состояние объекта. Теперь — честная ошибка
-// без мутации, объект остаётся пригодным для повторных вызовов.
+// и рекурсивно повторял, портя состояние объекта. Повтор с половиной пароля —
+// легитимная совместимость со старым Keeper (halfpass_test.go), но без
+// мутации: неверный пароль даёт честную ошибку, объект остаётся пригодным.
 func TestSignWrongPasswordReturnsErrorWithoutMutation(t *testing.T) {
 	const wmid, pass = "123456789012", "correct-password"
 	key := buildTestKey(wmid, pass, big.NewInt(3), big.NewInt(0x01000001))
