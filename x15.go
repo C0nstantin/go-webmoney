@@ -25,16 +25,16 @@ func (t TrustList) GetSignSource(reqn string) (string, error) {
 type TrustListResponse struct {
 	XMLName   xml.Name `xml:"trustlist"`
 	Cnt       string   `xml:"cnt,attr"`
-	TrustList []Trust  `xml:"trastlist"`
+	TrustList []Trust  `xml:"trust"`
 }
 
 type Trust struct {
-	XMLName     xml.Name `xml:"trast"`
+	XMLName     xml.Name `xml:"trust"`
 	Id          string   `xml:"id,attr"`
 	Inv         string   `xml:"inv,attr"`
 	Trast       string   `xml:"trans,attr"`
 	PurseAttr   string   `xml:"purse,attr"`
-	TransHist   string   `xml:"transhist"`
+	TransHist   string   `xml:"transhist,attr"`
 	Master      string   `xml:"master"`
 	Purse       string   `xml:"purse"`
 	DayLimit    string   `xml:"daylimit"`

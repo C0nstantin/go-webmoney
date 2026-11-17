@@ -27,7 +27,7 @@ func (i InInvoices) GetSignSource(reqn string) (string, error) {
 
 type InInvoicesResponse struct {
 	XMLName     xml.Name          `xml:"ininvoices"`
-	InvoiceList []InvoiceResponse `xml:"ininvoices"`
+	InvoiceList []InvoiceResponse `xml:"ininvoice"`
 }
 
 func (w *WmClient) GetInInvoices(i InInvoices) (InInvoicesResponse, error) {
