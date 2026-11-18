@@ -18,7 +18,7 @@ type X20Request struct {
 }
 
 func (x X20Request) GetSignSource(s string) (string, error) {
-	return x.LmiPayeePurse + x.LmiPaymentNo + x.LmiClientnumber + x.LmiClientnubmerType, nil
+	return x.LmiPayeePurse + x.LmiPaymentNo + x.LmiClientnumber + x.LmiClientnubmerType + s, nil
 }
 
 type X202Request struct {
@@ -29,7 +29,7 @@ type X202Request struct {
 }
 
 func (x X202Request) GetSignSource(s string) (string, error) {
-	return x.LmiPayeePurse + x.LmiWminvoiceid + x.LmiClientnumberCode, nil
+	return x.LmiPayeePurse + x.LmiWminvoiceid + x.LmiClientnumberCode + s, nil
 }
 
 func (w *WmClient) TransRequest(x X20Request) (MerchantOperation, error) {

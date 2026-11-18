@@ -1,13 +1,13 @@
 package webmoney
 
 import (
-	"os"
 	"regexp"
 	"testing"
 	"time"
 )
 
 func TestReqn(t *testing.T) {
+	t.Setenv("USE_OLD_REQN", "")
 	reqn := Reqn()
 	// Check if the length of the output is as expected
 	expectedLength := 17 // YYYYMMDDHHMMSSmmm
@@ -40,7 +40,7 @@ func TestReqn(t *testing.T) {
 	}
 }
 func TestOldReqn(t *testing.T) {
-	os.Setenv("USE_OLD_REQN", "true")
+	t.Setenv("USE_OLD_REQN", "true")
 	reqn := Reqn()
 	// Check if the length of the output is as expected
 	if len(reqn) != 14 {

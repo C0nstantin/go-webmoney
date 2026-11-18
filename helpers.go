@@ -67,18 +67,47 @@ func initLocations() {
 	}
 }
 
+// reqnMu guards the last issued request number so that concurrent Reqn()
+// calls never produce duplicates and numbers stay strictly increasing
+// (WebMoney requires a strictly increasing reqn per WMID).
+var (
+	reqnMu      sync.Mutex
+	lastReqnT   time.Time
+	lastReqnOld bool
+)
+
 // Reqn returns a unique transaction id (based on time) for WebMoney request
 // Each subsequent request must have a Reqn greater than the previous one
 func Reqn() string {
 	locOnce.Do(initLocations)
-	
+
 	now := time.Now()
-	nanoseconds := fmt.Sprintf("%03.f", float32(now.Nanosecond()/1000000))
-	
-	if os.Getenv("USE_OLD_REQN") != "" {
-		return now.In(utcLoc).Format("060102150405") + nanoseconds[0:2]
+	old := os.Getenv("USE_OLD_REQN") != ""
+
+	reqnMu.Lock()
+	defer reqnMu.Unlock()
+
+	// Resolution of the format: 1ms for the 17-digit form, 10ms for the
+	// legacy 14-digit form (centiseconds).
+	step := time.Millisecond
+	if old {
+		step = 10 * time.Millisecond
 	}
-	return now.In(moscowLoc).Format("20060102150405") + nanoseconds
+	t := now.Truncate(step)
+	// Same-tick calls and clock rollbacks would otherwise repeat or
+	// decrease the number; advance the last issued time by one tick
+	// instead (keeps every timestamp field valid). A format switch
+	// (USE_OLD_REQN toggled at runtime) restarts the sequence.
+	if old == lastReqnOld && !t.After(lastReqnT) {
+		t = lastReqnT.Add(step)
+	}
+	lastReqnT = t
+	lastReqnOld = old
+
+	if old {
+		return t.In(utcLoc).Format("060102150405") + fmt.Sprintf("%02d", t.Nanosecond()/10000000)
+	}
+	return t.In(moscowLoc).Format("20060102150405") + fmt.Sprintf("%03d", t.Nanosecond()/1000000)
 }
 
 // Utf8ToWin encode string from utf8 to cp1251

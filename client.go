@@ -171,12 +171,14 @@ func (w *WmClient) sendRequest(url string, body string) (string, error) {
 			log.Println(err)
 		}
 	}(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("webmoney: unexpected HTTP status %d", resp.StatusCode)
+	}
 	result, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize))
 	if err != nil {
 		return "", err
-	} else {
-		return string(result), nil
 	}
+	return string(result), nil
 }
 
 func (w *WmClient) getTransport() (*http.Transport, error) {

@@ -17,37 +17,21 @@ func (w WmString) IsCompatibleWithWmXml() bool {
 }
 
 func (w WmString) IsWmEncoded() bool {
-	s := strings.ToLower(string(w))
-
-	if !strings.HasPrefix(s, w.Prefix()) {
+	s := string(w)
+	prefix := w.Prefix()
+	if len(s) < len(prefix) || !strings.EqualFold(s[:len(prefix)], prefix) {
 		return false
 	}
 
-	for i := len(w.Prefix()); i < len(s); i++ {
-		ch := rune(w[i])
+	// Hex digits are case-insensitive; iterate runes of the lowercased
+	// payload (byte indexing into a ToLower result can shift or panic).
+	for _, ch := range strings.ToLower(s[len(prefix):]) {
 		switch ch {
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-		case 'a':
-		case 'b':
-		case 'c':
-		case 'd':
-		case 'e':
-		case 'f':
-		case ';':
-			break
+		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+			'a', 'b', 'c', 'd', 'e', 'f', ';':
 		default:
 			return false
 		}
-
 	}
 
 	return true
@@ -58,7 +42,7 @@ func (w WmString) Prefix() string {
 }
 
 func (w WmString) ToWmString() string {
-	s := strings.ToLower(string(w))
+	s := string(w)
 	if w.IsCompatibleWithWmXml() {
 		s = strings.ReplaceAll(s, string("\u2212"), "-")
 		s = strings.ReplaceAll(s, "—", "-")
@@ -76,12 +60,12 @@ func (w WmString) ToWmString() string {
 func (w WmString) FromWmString() string {
 
 	if !w.IsWmEncoded() {
-		return strings.ToLower(string(w))
+		return string(w)
 	}
 
 	elements := strings.SplitN(string(w), ":", 2)
 	if len(elements) < 2 {
-		return strings.ToLower(string(w))
+		return string(w)
 	}
 	el := strings.Split(elements[1], ";")
 	var builder strings.Builder
