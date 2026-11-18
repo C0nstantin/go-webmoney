@@ -80,6 +80,7 @@ type Wmsigner struct {
 	key  string
 }
 
+// Sign signs data with a classic RSA or v2 Ed25519 WebMoney key.
 func (w *Wmsigner) Sign(data string) (string, error) {
 
 	//check wmid
@@ -93,13 +94,16 @@ func (w *Wmsigner) Sign(data string) (string, error) {
 
 		return "", err
 	}
-	if len(decode_key) != 164 {
+	if len(decode_key) != 164 && len(decode_key) != kwmV2Size {
 		return "", errors.New("Illegal size for keydata")
 	}
 
 	//checkpassword
 	if len(w.pass) == 0 {
 		return "", errors.New("Password can not to be empty!")
+	}
+	if len(decode_key) == kwmV2Size {
+		return w.signV2(data, decode_key)
 	}
 	powers, modules, err := w.initkey()
 	if err != nil {
