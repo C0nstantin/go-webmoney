@@ -13,7 +13,7 @@ import (
 func TestSendRequestRejectsNon200(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`<error><secret_key>topsecret</secret_key>boom</error>`))
+		w.Write([]byte(`<error><secret_key>topsecret` + strings.Repeat("x", 220) + `</secret_key></error>`))
 	}))
 	defer srv.Close()
 

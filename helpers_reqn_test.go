@@ -27,6 +27,18 @@ func TestReqnSequentialStrictlyIncreasing(t *testing.T) {
 }
 
 func TestReqnConcurrentUnique(t *testing.T) {
+	t.Run("modern", func(t *testing.T) {
+		t.Setenv("USE_OLD_REQN", "")
+		checkConcurrentReqn(t, 17)
+	})
+	t.Run("legacy", func(t *testing.T) {
+		t.Setenv("USE_OLD_REQN", "1")
+		checkConcurrentReqn(t, 14)
+	})
+}
+
+func checkConcurrentReqn(t *testing.T, digits int) {
+	t.Helper()
 	const workers, perWorker = 50, 200
 	results := make(chan string, workers*perWorker)
 	var wg sync.WaitGroup
@@ -42,11 +54,11 @@ func TestReqnConcurrentUnique(t *testing.T) {
 	wg.Wait()
 	close(results)
 
-	pattern := regexp.MustCompile(`^\d{17}$`)
+	pattern := regexp.MustCompile(`^\d{` + strconv.Itoa(digits) + `}$`)
 	seen := make(map[string]bool, workers*perWorker)
 	for s := range results {
 		if !pattern.MatchString(s) {
-			t.Fatalf("Reqn %q does not match 17-digit format", s)
+			t.Fatalf("Reqn %q does not match %d-digit format", s, digits)
 		}
 		if seen[s] {
 			t.Fatalf("duplicate Reqn under concurrency: %s", s)

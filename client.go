@@ -171,17 +171,12 @@ func (w *WmClient) sendRequest(url string, body string) (string, error) {
 			log.Println(err)
 		}
 	}(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("webmoney: unexpected HTTP status %d", resp.StatusCode)
+	}
 	result, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize))
 	if err != nil {
 		return "", err
-	}
-	if resp.StatusCode != http.StatusOK {
-		snippet := string(result)
-		if len(snippet) > 200 {
-			snippet = snippet[:200]
-		}
-		return "", fmt.Errorf("webmoney: unexpected HTTP status %d from %s: %s",
-			resp.StatusCode, url, MaskXMLSecrets(snippet))
 	}
 	return string(result), nil
 }
