@@ -25,7 +25,7 @@ var wmidRegex = regexp.MustCompile(`^[0-9]{12}$`)
 
 // NewSigner return wmsigner object with wmid, pass and key
 func NewSigner(wmid string, pass string, key string) *Wmsigner {
-	return &Wmsigner{wmid, pass, key, nil}
+	return &Wmsigner{wmid: wmid, pass: pass, key: key}
 }
 
 /*
@@ -60,21 +60,24 @@ func reversebyte(s []byte) []byte {
 }
 
 /*create bignum object from bytes.Buffer*/
-func readBn(b *bytes.Buffer) *big.Int {
+func readBn(b *bytes.Buffer) (*big.Int, error) {
 	var count uint16
-	_ = binary.Read(b, binary.LittleEndian, &count)
-
-	data := reversebyte(b.Next(int(count)))
+	if err := binary.Read(b, binary.LittleEndian, &count); err != nil {
+		return nil, fmt.Errorf("malformed key data: %w", err)
+	}
+	data := b.Next(int(count))
+	if len(data) != int(count) {
+		return nil, errors.New("malformed key data: truncated big number")
+	}
 	i := new(big.Int)
-	i.SetBytes(data)
-	return i
+	i.SetBytes(reversebyte(data))
+	return i, nil
 }
 
 type Wmsigner struct {
 	wmid string
 	pass string
 	key  string
-	err  error
 }
 
 func (w *Wmsigner) Sign(data string) (string, error) {
@@ -98,16 +101,18 @@ func (w *Wmsigner) Sign(data string) (string, error) {
 	if len(w.pass) == 0 {
 		return "", errors.New("Password can not to be empty!")
 	}
-	powers, modules := w.initkey()
-	if powers == nil || modules == nil {
-		return "", errors.New("failed to initialize key: check wmid, password and key data")
+	powers, modules, err := w.initkey()
+	if err != nil {
+		return "", err
 	}
 	hash := md4Hash([]byte(data))
 	buf := bytes.NewBuffer(hash)
 	var ini uint32
 	//add rendom 40 bytes
 	for i := 1; i <= 10; i++ {
-		binary.Read(rand.Reader, binary.LittleEndian, &ini)
+		if err := binary.Read(rand.Reader, binary.LittleEndian, &ini); err != nil {
+			return "", fmt.Errorf("crypto/rand failed: %w", err)
+		}
 		binary.Write(buf, binary.LittleEndian, ini)
 	}
 	hash = buf.Bytes()
@@ -126,14 +131,21 @@ func (w *Wmsigner) Sign(data string) (string, error) {
 	i.SetBytes(data_res)
 	signature := i.Exp(i, powers, modules)
 
+	modlen := len(modules.Bytes())
 	sig := bytes.NewBuffer([]byte{})
-	for i := len(signature.Bytes()); i <= len(modules.Bytes()); i++ {
-		sig.Write([]byte{0})
+	for i := len(signature.Bytes()); i < modlen; i++ {
+		sig.WriteByte(0)
 	}
 	sig.Write(signature.Bytes())
 	sigbyte := reversebyte(sig.Bytes())
+	if len(sigbyte)%2 != 0 {
+		// Odd modulus length: pad the most significant byte so the
+		// uint16 packing below does not silently drop it. Real WM keys
+		// have even-length moduli; their output is unchanged.
+		sigbyte = append(sigbyte, 0)
+	}
 	sig = bytes.NewBuffer(sigbyte)
-	var s = make([]uint16, len(sig.Bytes())/2)
+	var s = make([]uint16, len(sigbyte)/2)
 	err = binary.Read(sig, binary.LittleEndian, s)
 	if err != nil {
 		return "", err
@@ -147,13 +159,34 @@ func (w *Wmsigner) Sign(data string) (string, error) {
 
 }
 
-func (w *Wmsigner) initkey() (*big.Int, *big.Int) {
-	data, _ := base64.StdEncoding.DecodeString(w.key)
+func (w *Wmsigner) initkey() (*big.Int, *big.Int, error) {
+	// Совместимость с WM Keeper Classic: ключи, созданные старыми версиями
+	// Keeper, зашифрованы первой половиной пароля. Официальный WMSigner
+	// (Signer::SecureKeyByIDPWHalf) и эталонный PHP-signer пробуют полный
+	// пароль и его первую половину. Сам пароль никогда не мутирует.
+	powers, modules, err := w.initkeyWithPass(w.pass)
+	if err == nil {
+		return powers, modules, nil
+	}
+	if half := len(w.pass) / 2; half < len(w.pass) {
+		if p2, m2, err2 := w.initkeyWithPass(w.pass[:half]); err2 == nil {
+			return p2, m2, nil
+		}
+	}
+	// Обе попытки не прошли — возвращаем ошибку полного пароля.
+	return nil, nil, err
+}
+
+func (w *Wmsigner) initkeyWithPass(pass string) (*big.Int, *big.Int, error) {
+	data, err := base64.StdEncoding.DecodeString(w.key)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	r := bytes.NewBuffer(data)
 	header := r.Next(30)
 	body := r.Bytes()
-	body = w.encryptKey(body)
+	body = w.encryptKey(body, pass)
 	r = bytes.NewBuffer([]byte{})
 
 	r.Write(header)
@@ -174,24 +207,27 @@ func (w *Wmsigner) initkey() (*big.Int, *big.Int) {
 
 	calculated_crc := md4Hash(r.Bytes())
 	if !bytes.Equal(crc, calculated_crc) {
-		if w.err == nil {
-			w.pass = w.pass[0 : len(w.pass)/2]
-			w.err = errors.New("invalid crc")
-			return w.initkey()
-		} else {
-			return nil, nil
-
-		}
+		// Несовпадение CRC для данной попытки пароля. Решение о повторе
+		// с половиной пароля принимает initkey; состояние не мутирует.
+		return nil, nil, errors.New("key CRC mismatch: wrong password or corrupted key data")
 	}
 	r = bytes.NewBuffer(body)
 	r.Next(4)
-	powers := readBn(r)
-	modules := readBn(r)
-	return powers, modules
-
+	powers, err := readBn(r)
+	if err != nil {
+		return nil, nil, err
+	}
+	modules, err := readBn(r)
+	if err != nil {
+		return nil, nil, err
+	}
+	if powers.Sign() <= 0 || modules.Sign() <= 0 {
+		return nil, nil, errors.New("invalid key data: zero exponent or modulus")
+	}
+	return powers, modules, nil
 }
 
-func (w *Wmsigner) encryptKey(buff []byte) []byte {
-	hashResult := md4Hash([]byte(w.wmid + w.pass))
+func (w *Wmsigner) encryptKey(buff []byte, pass string) []byte {
+	hashResult := md4Hash([]byte(w.wmid + pass))
 	return xorWm(buff, hashResult)
 }
